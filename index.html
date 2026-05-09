@@ -96,7 +96,7 @@
             try {
                 // ดึงข้อมูลจาก View ที่มึงมีอยู่เป๊ะๆ (สะกดตามมึงเลย matrics)
                 const { data, error } = await supabaseClient
-                    .from('wander_ceo_matrics')
+                    .from('wander_ceo_metrics')
                     .select('*')
                     .limit(10000); // ต้องดึงเยอะหน่อยเพราะข้อมูลมึงยังไม่สรุปรายเดือน
 
