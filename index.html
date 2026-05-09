@@ -3,255 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WanderSiam CEO Dashboard</title>
+    <title>Executive Insights | WanderSiam</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; }
-        ::-webkit-scrollbar { display: none; } /* ซ่อน Scrollbar ให้ดูสะอาดบนมือถือ */
-        .card { background: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #f1f5f9; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background-color: #f8fafc; }
+        .card-shadow { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); }
+        select { -webkit-appearance: none; background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; }
     </style>
 </head>
-<body class="text-gray-800 pb-12">
+<body class="pb-10">
 
-    <div class="bg-slate-900 text-white p-5 sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <div>
-                <h1 class="text-xl font-black tracking-tight">WanderSiam</h1>
-                <p class="text-xs text-slate-400">Executive Analytics</p>
-            </div>
-            <div id="connectionStatus" class="text-xs font-bold px-3 py-1 bg-slate-800 rounded-full text-slate-300">
-                Syncing...
-            </div>
+    <nav class="bg-white border-b border-gray-100 px-5 py-4 sticky top-0 z-50">
+        <div class="max-w-xl mx-auto flex justify-between items-center">
+            <span class="text-lg font-black text-slate-900 tracking-tighter italic">WANDERSIAM <span class="text-blue-600 font-normal not-italic">BI</span></span>
+            <div id="status" class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Loading...</div>
         </div>
-    </div>
+    </nav>
 
-    <div class="max-w-4xl mx-auto px-4 mt-6 space-y-6">
-
-        <div class="card p-4">
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">เลือกเดือนเพื่อวิเคราะห์</label>
-            <select id="filterMonth" class="w-full bg-slate-50 border border-slate-200 text-base rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-800 shadow-sm appearance-none"></select>
+    <div class="max-w-xl mx-auto px-5 pt-6 space-y-6">
+        
+        <div class="bg-white p-4 rounded-2xl card-shadow border border-gray-100">
+            <p class="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Select Analytics Period</p>
+            <select id="filterMonth" class="w-full bg-slate-50 border-0 text-lg font-bold rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 text-slate-800"></select>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-            <div class="card p-5 border-t-4 border-t-blue-500">
-                <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">ยอดจองสุทธิ (Bookings)</p>
+            <div class="bg-white p-5 rounded-3xl card-shadow border border-gray-50">
+                <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Net Bookings</p>
                 <h2 id="kpiNetBookings" class="text-3xl font-black text-slate-900">0</h2>
-                <p class="text-[10px] text-slate-400 mt-1">เคสที่คอนเฟิร์มแล้ว</p>
+                <div class="h-1 w-8 bg-blue-500 mt-2 rounded-full"></div>
             </div>
-            <div class="card p-5 border-t-4 border-t-green-500">
-                <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">รายได้สุทธิ (Revenue)</p>
-                <h2 id="kpiNetIncome" class="text-3xl font-black text-slate-900">฿0</h2>
-                <p class="text-[10px] text-slate-400 mt-1">รายได้ที่รับจริง</p>
+            <div class="bg-white p-5 rounded-3xl card-shadow border border-gray-50">
+                <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Net Revenue</p>
+                <h2 id="kpiNetIncome" class="text-2xl font-black text-emerald-600">฿0</h2>
+                <div class="h-1 w-8 bg-emerald-500 mt-2 rounded-full"></div>
             </div>
-            <div class="card p-5 border-t-4 border-t-red-500 bg-red-50">
-                <p class="text-xs text-red-500 font-bold uppercase tracking-wider mb-1">ยกเลิก (Cancellations)</p>
-                <h2 id="kpiCancelCount" class="text-3xl font-black text-red-700">0</h2>
-                <p class="text-[10px] text-red-400 mt-1">จำนวนเคสที่ยกเลิก</p>
+            <div class="bg-rose-50 p-5 rounded-3xl border border-rose-100">
+                <p class="text-[10px] font-bold text-rose-400 uppercase mb-1">Canceled Cases</p>
+                <h2 id="kpiCancelCount" class="text-3xl font-black text-rose-600">0</h2>
             </div>
-            <div class="card p-5 border-t-4 border-t-rose-600 bg-red-50">
-                <p class="text-xs text-red-500 font-bold uppercase tracking-wider mb-1">มูลค่าที่สูญเสีย (Lost ฿)</p>
-                <h2 id="kpiLostIncome" class="text-3xl font-black text-red-700">฿0</h2>
-                <p class="text-[10px] text-red-400 mt-1">โอกาสในการขายที่หายไป</p>
+            <div class="bg-rose-50 p-5 rounded-3xl border border-rose-100">
+                <p class="text-[10px] font-bold text-rose-400 uppercase mb-1">Lost Revenue</p>
+                <h2 id="kpiLostIncome" class="text-2xl font-black text-rose-600">฿0</h2>
             </div>
         </div>
 
-        <div class="card p-5">
-            <h3 class="text-sm font-black text-slate-800 mb-4 uppercase">🏆 ทัวร์ขายดีประจำเดือน (Top Tours)</h3>
-            <div class="h-64 relative">
+        <div class="bg-white p-6 rounded-3xl card-shadow">
+            <h3 class="text-xs font-black text-slate-800 mb-6 uppercase tracking-widest">🏆 Top Performing Tours</h3>
+            <div class="h-80">
                 <canvas id="chartTours"></canvas>
             </div>
         </div>
 
-        <div class="card p-5">
-            <h3 class="text-sm font-black text-slate-800 mb-4 uppercase">💼 สัดส่วนรายได้ตาม Merchant</h3>
-            <div class="h-64 relative">
+        <div class="bg-white p-6 rounded-3xl card-shadow">
+            <h3 class="text-xs font-black text-slate-800 mb-6 uppercase tracking-widest">💼 Merchant Share (Income)</h3>
+            <div class="h-64">
                 <canvas id="chartMerchant"></canvas>
             </div>
         </div>
 
-        <div class="card p-5">
-            <h3 class="text-sm font-black text-slate-800 mb-4 uppercase">📈 แนวโน้มรายได้ (Revenue Trend)</h3>
-            <div class="h-56 relative">
+        <div class="bg-white p-6 rounded-3xl card-shadow">
+            <h3 class="text-xs font-black text-slate-800 mb-6 uppercase tracking-widest">📈 Revenue Trend</h3>
+            <div class="h-56">
                 <canvas id="chartTrend"></canvas>
             </div>
         </div>
-
     </div>
 
     <script>
         const supabaseUrl = 'https://ibmrskcssblrroveuvxd.supabase.co'; 
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlibXJza2Nzc2JscnJvdmV1dnhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNjQ3ODAsImV4cCI6MjA5Mzg0MDc4MH0.ep1-QM9RkA3QkfrbFQa-LLvs7KADTnrmNDqZarLSMY0';
-        
         const { createClient } = supabase;
         const supabaseClient = createClient(supabaseUrl, supabaseKey);
-        
+
         let rawData = [];
         let chartInstances = {};
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-        // ตั้งค่าสีคงที่ตามที่ระบุ
         const merchantColors = {
             'VIATOR': '#006600',
             'GET YOUR GUIDE': '#ff6600',
             'WANDERSIAM': '#3385ff',
             'AIR BNB': '#ff00ff',
-            'DEFAULT': '#94a3b8' // สีเทาสำหรับที่เหลือ
+            'DEFAULT': '#e2e8f0'
         };
 
-        async function fetchSupabaseData() {
+        async function init() {
             try {
-                const { data, error } = await supabaseClient
-                    .from('wander_ceo_metrics')
-                    .select('*')
-                    .limit(10000); 
-
+                const { data, error } = await supabaseClient.from('wander_ceo_dashboard').select('*');
                 if (error) throw error;
 
-                rawData = data.map(row => {
-                    let monthStr = "Unknown";
-                    if (row.DATE) {
-                        const dateObj = new Date(row.DATE);
-                        monthStr = !isNaN(dateObj.getTime()) ? monthNames[dateObj.getMonth()] + ' ' + dateObj.getFullYear() : "Unknown";
-                    }
-                    return {
-                        month: monthStr,
-                        rawDate: new Date(row.DATE), // ไว้สำหรับเรียงเดือน
-                        net_bookings: parseInt(row.net_bookings) || 0,
-                        cancelled_count: parseInt(row.cancelled_count) || 0,
-                        net_income: parseFloat(row.net_income) || 0,
-                        lost_income: parseFloat(row.lost_income) || 0,
-                        tour: row.tour_name || "Unknown",
-                        merchant: row.merchant ? row.merchant.toUpperCase().trim() : "DIRECT"
-                    };
-                });
+                rawData = data.map(r => ({
+                    ...r,
+                    monthKey: monthNames[new Date(r.DATE).getMonth()] + ' ' + new Date(r.DATE).getFullYear(),
+                    rawDate: new Date(r.DATE),
+                    merchant: r.merchant ? r.merchant.toUpperCase().trim() : 'DIRECT'
+                }));
 
-                document.getElementById('connectionStatus').innerText = 'Live 🟢';
-                document.getElementById('connectionStatus').classList.replace('text-slate-300', 'text-emerald-400');
-                
-                populateFilters();
-                updateDashboard();
+                const status = document.getElementById('status');
+                status.innerText = 'Online 🟢';
+                status.className = 'text-[10px] font-bold uppercase tracking-widest text-emerald-500';
 
-            } catch (err) {
-                console.error("Fetch Error:", err);
-                document.getElementById('connectionStatus').innerText = 'Offline 🔴';
+                setupFilters();
+                render();
+            } catch (e) {
+                document.getElementById('status').innerText = 'Offline 🔴';
             }
         }
 
-        function populateFilters() {
-            // เรียงเดือนตามเวลาจริง
-            const uniqueMonths = [...new Set(rawData.map(d => d.month))];
-            uniqueMonths.sort((a, b) => {
-                const dateA = rawData.find(d => d.month === a).rawDate;
-                const dateB = rawData.find(d => d.month === b).rawDate;
-                return dateB - dateA; // ล่าสุดขึ้นก่อน
+        function setupFilters() {
+            const months = [...new Set(rawData.map(d => d.monthKey))].sort((a,b) => {
+                return rawData.find(d => d.monthKey === b).rawDate - rawData.find(d => d.monthKey === a).rawDate;
             });
+            const sel = document.getElementById('filterMonth');
+            months.forEach(m => sel.innerHTML += `<option value="${m}">${m}</option>`);
+            sel.onchange = render;
+        }
 
-            const el = document.getElementById('filterMonth');
-            el.innerHTML = '<option value="ALL">ดูทุกเดือน (All Time)</option>';
-            uniqueMonths.forEach(m => el.innerHTML += `<option value="${m}">${m}</option>`);
+        function render() {
+            const filter = document.getElementById('filterMonth').value;
+            const data = rawData.filter(d => d.monthKey === filter);
+
+            // KPIs
+            const netB = data.reduce((s, r) => s + parseInt(r.net_bookings), 0);
+            const netI = data.reduce((s, r) => s + parseFloat(r.net_revenue), 0);
+            const canC = data.reduce((s, r) => s + parseInt(r.cancel_count), 0);
+            const lostI = data.reduce((s, r) => s + parseFloat(r.lost_revenue), 0);
+
+            document.getElementById('kpiNetBookings').innerText = netB.toLocaleString();
+            document.getElementById('kpiNetIncome').innerText = '฿' + formatNum(netI);
+            document.getElementById('kpiCancelCount').innerText = canC.toLocaleString();
+            document.getElementById('kpiLostIncome').innerText = '฿' + formatNum(lostI);
+
+            // Charts
+            updateToursChart(data);
+            updateMerchantChart(data);
+            updateTrendChart();
+        }
+
+        function formatNum(n) {
+            if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+            if (n >= 1000) return (n/1000).toFixed(1) + 'k';
+            return n.toLocaleString();
+        }
+
+        function updateToursChart(data) {
+            const agg = {};
+            data.forEach(r => agg[r.tour] = (agg[r.tour] || 0) + r.net_revenue);
+            const sorted = Object.entries(agg).sort((a,b) => b[1]-a[1]).slice(0, 5);
             
-            // ตั้งค่าเริ่มต้นให้เป็นเดือนล่าสุด
-            if(uniqueMonths.length > 0) el.value = uniqueMonths[0];
-
-            el.onchange = updateDashboard;
+            draw('chartTours', 'bar', sorted.map(t => t[0]), sorted.map(t => t[1]), 'Revenue', '#3b82f6', 'y');
         }
 
-        function updateDashboard() {
-            const mFilter = document.getElementById('filterMonth').value;
+        function updateMerchantChart(data) {
+            const agg = {};
+            data.forEach(r => agg[r.merchant] = (agg[r.merchant] || 0) + r.net_revenue);
+            const labels = Object.keys(agg);
+            const colors = labels.map(l => {
+                for(let key in merchantColors) if(l.includes(key)) return merchantColors[key];
+                return merchantColors.DEFAULT;
+            });
 
-            const filtered = rawData.filter(d => mFilter === 'ALL' || d.month === mFilter);
+            draw('chartMerchant', 'doughnut', labels, Object.values(agg), 'Share', colors);
+        }
 
-            // คำนวณ 4 KPIs
-            const netBookings = filtered.reduce((s, r) => s + r.net_bookings, 0);
-            const netIncome = filtered.reduce((s, r) => s + r.net_income, 0);
-            const cancelCount = filtered.reduce((s, r) => s + r.cancelled_count, 0);
-            const lostIncome = filtered.reduce((s, r) => s + r.lost_income, 0);
+        function updateTrendChart() {
+            const agg = {};
+            // Trend ดูจากข้อมูลทั้งหมด
+            rawData.forEach(r => agg[r.monthKey] = (agg[r.monthKey] || 0) + r.net_revenue);
+            const sortedKeys = Object.keys(agg).sort((a,b) => rawData.find(d => d.monthKey === a).rawDate - rawData.find(d => d.monthKey === b).rawDate);
             
-            // ยัดใส่หน้าจอ (จัด Format ให้อ่านง่าย)
-            document.getElementById('kpiNetBookings').innerText = netBookings.toLocaleString();
-            document.getElementById('kpiNetIncome').innerText = '฿' + formatNumberShort(netIncome);
-            document.getElementById('kpiCancelCount').innerText = cancelCount.toLocaleString();
-            document.getElementById('kpiLostIncome').innerText = '฿' + formatNumberShort(lostIncome);
-
-            renderCharts(filtered);
+            draw('chartTrend', 'line', sortedKeys, sortedKeys.map(k => agg[k]), 'Revenue', '#0f172a');
         }
 
-        function formatNumberShort(num) {
-            if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
-            if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
-            return num.toLocaleString();
-        }
-
-        function renderCharts(data) {
-            // 1. Chart: ทัวร์ขายดี (Top Tours)
-            const tourData = aggregate(data, 'tour', 'net_income');
-            const sortedTours = Object.entries(tourData).sort((a,b) => b[1]-a[1]).slice(0, 7); // เอาท็อป 7
-            updateChart('chartTours', 'bar', sortedTours.map(t => t[0]), sortedTours.map(t => t[1]), 'รายได้สุทธิ (฿)', '#3b82f6', 'y');
-
-            // 2. Chart: สัดส่วน Merchant พร้อมสีที่คุณระบุ
-            const merData = aggregate(data, 'merchant', 'net_income');
-            const merLabels = Object.keys(merData);
-            const merValues = Object.values(merData);
-            // เทียบสีทีละอัน
-            const merBgColors = merLabels.map(label => {
-                let matchColor = merchantColors['DEFAULT'];
-                for (const key in merchantColors) {
-                    if (label.includes(key)) { matchColor = merchantColors[key]; break; }
-                }
-                return matchColor;
-            });
-            updateChart('chartMerchant', 'doughnut', merLabels, merValues, 'Net Revenue', merBgColors);
-
-            // 3. Chart: Trend รายได้ (เอาข้อมูลทั้งหมดที่ไม่สน Filter เดือนมาทำ Trend)
-            const trendData = aggregate(rawData, 'month', 'net_income');
-            // เรียงเดือนตามเวลาจริง
-            const sortedTrendLabels = Object.keys(trendData).sort((a, b) => {
-                const dateA = rawData.find(d => d.month === a).rawDate;
-                const dateB = rawData.find(d => d.month === b).rawDate;
-                return dateA - dateB; // เก่าไปใหม่
-            });
-            const sortedTrendValues = sortedTrendLabels.map(m => trendData[m]);
-            updateChart('chartTrend', 'bar', sortedTrendLabels, sortedTrendValues, 'Revenue', '#0f172a');
-        }
-
-        function aggregate(data, key, type) {
-            return data.reduce((acc, curr) => {
-                const k = curr[key] || "Unknown";
-                acc[k] = (acc[k] || 0) + curr[type];
-                return acc;
-            }, {});
-        }
-
-        function updateChart(id, type, labels, values, label, colors, axis = 'x') {
+        function draw(id, type, labels, values, label, color, axis = 'x') {
             if (chartInstances[id]) chartInstances[id].destroy();
-            chartInstances[id] = new Chart(document.getElementById(id), {
+            const ctx = document.getElementById(id).getContext('2d');
+            chartInstances[id] = new Chart(ctx, {
                 type: type,
                 data: {
                     labels: labels,
-                    datasets: [{ 
-                        label: label, 
-                        data: values, 
-                        backgroundColor: colors,
-                        borderRadius: type === 'bar' ? 4 : 0
-                    }]
+                    datasets: [{ label, data: values, backgroundColor: color, borderColor: color, fill: false, tension: 0.4, borderRadius: 8 }]
                 },
-                options: { 
-                    indexAxis: axis, 
+                options: {
+                    indexAxis: axis,
                     maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: type === 'doughnut', position: 'bottom', labels: { boxWidth: 12, font: {size: 10} } } 
-                    },
-                    scales: type === 'bar' ? { 
-                        x: { grid: {display: false} }, 
-                        y: { display: axis === 'y' } // ซ่อนแกน Y ถ้าเป็นกราฟแท่งแนวตั้งให้ดูคลีน
+                    plugins: { legend: { display: type === 'doughnut', position: 'bottom', labels: { usePointStyle: true, font: { size: 9 } } } },
+                    scales: type !== 'doughnut' ? { 
+                        x: { grid: { display: false }, ticks: { font: { size: 9 } } }, 
+                        y: { display: axis === 'x', grid: { color: '#f1f5f9' }, ticks: { font: { size: 9 } } } 
                     } : {}
                 }
             });
         }
 
-        fetchSupabaseData();
+        init();
     </script>
 </body>
 </html>
