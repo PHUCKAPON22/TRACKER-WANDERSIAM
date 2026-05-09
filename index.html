@@ -40,7 +40,7 @@
             <div class="card p-5 border-t-4 border-t-blue-500">
                 <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">ยอดจอง (Bookings)</p>
                 <h2 id="kpiNetBookings" class="text-3xl font-black text-slate-900">0</h2>
-                <p class="text-xs font-bold text-blue-600 mt-1 bg-blue-50 inline-block px-2 py-1 rounded">👤 มาคนเดียว: <span id="kpiSoloPax">0</span> รอบ</p>
+                <p class="text-[10px] text-slate-400 mt-1">จำนวนบุ๊กกิ้งสุทธิ</p>
             </div>
             <div class="card p-5 border-t-4 border-t-emerald-500">
                 <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">รายได้ (Revenue)</p>
@@ -55,7 +55,7 @@
             <div class="card p-5 border-t-4 border-t-amber-500 bg-amber-50">
                 <p class="text-xs text-amber-600 font-bold uppercase tracking-wider mb-1">ความเสี่ยง (Risk Rounds)</p>
                 <h2 id="kpiRiskCount" class="text-3xl font-black text-amber-700">0</h2>
-                <p class="text-[10px] text-amber-600 mt-1">รอบทัวร์ที่คนน้อยกว่า 3</p>
+                <p class="text-[10px] text-amber-600 mt-1">รอบทัวร์ขาดทุน (ลูกค้า 1 คน)</p>
             </div>
         </div>
 
@@ -94,36 +94,29 @@
 
         async function fetchSupabaseData() {
             try {
-                // ดึงข้อมูลจาก View ที่มึงมีอยู่เป๊ะๆ (สะกดตามมึงเลย matrics)
+                // ดึงจาก View ล่าสุดที่รวบยอดมาให้แล้ว
                 const { data, error } = await supabaseClient
-                    .from('wander_ceo_metrics')
+                    .from('wander_ceo_monthly_summary')
                     .select('*')
-                    .limit(10000); // ต้องดึงเยอะหน่อยเพราะข้อมูลมึงยังไม่สรุปรายเดือน
+                    .limit(10000);
 
                 if (error) throw error;
 
-                // แมพคอลัมน์ให้ตรงกับที่มึงพิมพ์มาเป๊ะๆ 100%
+                // แมพคอลัมน์ให้ตรงกับที่ Database ส่งมา
                 rawData = data.map(row => {
-                    // แปลงวันที่ให้เป็นชื่อเดือน
-                    const rawDate = row.DATE ? new Date(row.DATE) : new Date();
-                    const monthStr = !isNaN(rawDate.getTime()) ? monthNames[rawDate.getMonth()] + ' ' + rawDate.getFullYear() : "Unknown";
-
-                    // คำนวณ Net Booking จาก total - cancel
-                    const totalB = parseInt(row.total_bookings) || 0;
-                    const cancelB = parseInt(row.cancelled_bookings) || 0;
-                    const netB = totalB - cancelB;
-                    const netPax = parseInt(row.net_pax) || 0;
+                    const rawDate = row.sort_date ? new Date(row.sort_date) : new Date();
+                    const monthStr = row.month_year || "Unknown";
 
                     return {
                         month: monthStr,
                         rawDate: rawDate,
-                        net_bookings: netB > 0 ? netB : 0,
-                        cancel_count: cancelB,
+                        net_bookings: parseInt(row.net_bookings) || 0,
+                        cancel_count: parseInt(row.cancel_count) || 0,
                         net_income: parseFloat(row.net_income) || 0,
-                        is_risk: parseInt(row.is_risk) || 0,
-                        solo_bookings: (netPax === 1 && cancelB === 0) ? 1 : 0, // ถ้ามา 1 คนและไม่ยกเลิก นับเป็น Solo
-                        tour: row["TOUR NAME"] && row["TOUR NAME"] !== 'null' ? String(row["TOUR NAME"]).trim() : "Unknown Tour",
-                        merchant: row.Merchant && row.Merchant !== 'null' ? String(row.Merchant).toUpperCase().trim() : "DIRECT"
+                        // ดึงยอดทัวร์ขาดทุนที่คำนวณจาก View มาใส่
+                        loss_making: parseInt(row.loss_making_bookings) || 0,
+                        tour: row.tour_name && row.tour_name !== 'null' ? String(row.tour_name).trim() : "Unknown Tour",
+                        merchant: row.merchant && row.merchant !== 'null' ? String(row.merchant).toUpperCase().trim() : "DIRECT"
                     };
                 });
 
@@ -144,7 +137,6 @@
         function populateFilters() {
             const uniqueMonths = [...new Set(rawData.map(d => d.month))];
             
-            // เรียงเดือนจากล่าสุดไปเก่าสุด
             uniqueMonths.sort((a, b) => {
                 const dateA = rawData.find(d => d.month === a).rawDate;
                 const dateB = rawData.find(d => d.month === b).rawDate;
@@ -162,17 +154,16 @@
             const mFilter = document.getElementById('filterMonth').value;
             const filtered = rawData.filter(d => mFilter === 'ALL' || d.month === mFilter);
 
-            const netBookings = filtered.reduce((s, r) => s + r.net_bookings, 0);
-            const netIncome = filtered.reduce((s, r) => s + r.net_income, 0);
-            const cancelCount = filtered.reduce((s, r) => s + r.cancel_count, 0);
-            const riskCount = filtered.reduce((s, r) => s + r.is_risk, 0);
-            const soloPax = filtered.reduce((s, r) => s + r.solo_bookings, 0);
+            // ใช้ reduce บวกเลขทุกบรรทัด ยอด 5980 จะมาเต็มๆ ไม่ใช่ 2528
+            const netBookings = filtered.reduce((sum, row) => sum + row.net_bookings, 0);
+            const netIncome = filtered.reduce((sum, row) => sum + row.net_income, 0);
+            const cancelCount = filtered.reduce((sum, row) => sum + row.cancel_count, 0);
+            const riskCount = filtered.reduce((sum, row) => sum + row.loss_making, 0);
             
             document.getElementById('kpiNetBookings').innerText = netBookings.toLocaleString();
             document.getElementById('kpiNetIncome').innerText = '฿' + netIncome.toLocaleString();
             document.getElementById('kpiCancelCount').innerText = cancelCount.toLocaleString();
             document.getElementById('kpiRiskCount').innerText = riskCount.toLocaleString();
-            document.getElementById('kpiSoloPax').innerText = soloPax.toLocaleString();
 
             renderCharts(filtered);
         }
@@ -251,6 +242,7 @@
             });
         }
 
+        // สั่งทำงาน
         fetchSupabaseData();
     </script>
 </body>
