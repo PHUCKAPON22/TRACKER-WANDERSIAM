@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WanderSiam Supabase Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6 flex flex-col md:flex-row justify-between items-center gap-4 border-l-4 border-blue-600">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">WanderSiam Real-time Dashboard</h1>
+                <p class="text-sm text-gray-500 mt-1">ดึงข้อมูลอัตโนมัติจาก Supabase (PostgreSQL)</p>
+            </div>
+            <div id="connectionStatus" class="flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-sm font-bold">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+                </span>
+                กำลังโหลดข้อมูลจาก Database...
+            </div>
+        </div>
+
+        <div id="dashboardContent" class="hidden">
+            <div class="bg-white p-4 rounded-lg shadow-md mb-6 flex flex-wrap gap-4 items-end">
+                <div class="flex-1 min-w-[150px]">
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">เดือน (Month)</label>
+                    <select id="filterMonth" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500 focus:ring focus:ring-blue-200"></select>
+                </div>
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">แพลตฟอร์ม (Merchant)</label>
+                    <select id="filterMerchant" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500 focus:ring focus:ring-blue-200"></select>
+                </div>
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">ชื่อทัวร์ (Tour)</label>
+                    <select id="filterTour" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500 focus:ring focus:ring-blue-200"></select>
+                </div>
+                <div>
+                    <button id="resetFilters" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">รีเซ็ต</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white p-6 rounded-lg shadow-md border-b-4 border-blue-500">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase">ยอดจองรวม (Bookings)</h3>
+                    <p id="kpiTotalBookings" class="text-4xl font-bold text-gray-900 mt-2">0</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-b-4 border-green-500">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase">รายได้รวม (Income)</h3>
+                    <p id="kpiTotalIncome" class="text-4xl font-bold text-gray-900 mt-2">฿0</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-b-4 border-purple-500">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase">จำนวนทัวร์ที่ให้บริการ</h3>
+                    <p id="kpiTourCount" class="text-4xl font-bold text-gray-900 mt-2">0</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white p-6 rounded-lg shadow-md h-80">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">รายได้ตามแพลตฟอร์ม</h3>
+                    <canvas id="chartMerchant"></canvas>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md h-80">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">แนวโน้มการจองรายเดือน</h3>
+                    <canvas id="chartTimeline"></canvas>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md h-96 lg:col-span-2">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">ทัวร์ทำเงินสูงสุด (Top Revenue Tours)</h3>
+                    <canvas id="chartTours"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 2. CONFIGURATION (ใส่ Key ของคุณตรงนี้) ---
+        // คำเตือน: ใช้ Project URL และ anon key เท่านั้น ห้ามใส่ service_role เด็ดขาด
+        const supabaseUrl = 'https://ibmrskcssblrroveuvxd.supabase.co'; 
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlibXJza2Nzc2JscnJvdmV1dnhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNjQ3ODAsImV4cCI6MjA5Mzg0MDc4MH0.ep1-QM9RkA3QkfrbFQa-LLvs7KADTnrmNDqZarLSMY0';
+        
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseKey);
+        
+        let rawData = [];
+        let chartInstances = {};
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+        // --- 3. DATA FETCHING & SANITIZATION (ดึงข้อมูลจาก Supabase) ---
+        async function fetchSupabaseData() {
+            try {
+                // ดึงข้อมูลทั้งหมดจากตาราง bookings (เรียงตามวันที่)
+                const { data, error } = await supabaseClient
+                    .from('bookings')
+                    .select('*')
+                    .order('DATE', { ascending: true });
+
+                if (error) throw error;
+
+                console.log("Data Received: ", data.length, " records.");
+
+                // Map ข้อมูลให้อยู่ใน Format ที่ Dashboard นำไปใช้ต่อได้ทันที
+                rawData = data.map(row => {
+                    let monthStr = "Unknown";
+                    if (row.DATE) {
+                        const dateObj = new Date(row.DATE);
+                        if (!isNaN(dateObj.getTime())) {
+                            monthStr = monthNames[dateObj.getMonth()];
+                        }
+                    }
+
+                    return {
+                        ...row,
+                        month: monthStr,
+                        // ป้องกันค่าว่างด้วย Default Values
+                        income: parseFloat(row.Income) || 0,
+                        tour: row["TOUR NAME"] || "Unknown Tour",
+                        merchant: row.Merchant || "Unknown Platform"
+                    };
+                });
+
+                // ตรวจสอบความพร้อมของข้อมูลและสั่ง Render
+                if (rawData.length > 0) {
+                    const statusEl = document.getElementById('connectionStatus');
+                    statusEl.innerHTML = '● ดึงข้อมูลสำเร็จ (' + rawData.length.toLocaleString() + ' เคส)';
+                    statusEl.className = 'flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-bold';
+                    
+                    document.getElementById('dashboardContent').classList.remove('hidden');
+                    populateFilters();
+                    updateDashboard();
+                } else {
+                    const statusEl = document.getElementById('connectionStatus');
+                    statusEl.innerHTML = '● เชื่อมต่อแล้ว (แต่ตารางว่างเปล่า)';
+                    statusEl.className = 'flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm font-bold';
+                }
+
+            } catch (err) {
+                console.error("Supabase Connection Error: ", err);
+                const statusEl = document.getElementById('connectionStatus');
+                statusEl.innerHTML = '❌ เชื่อมต่อล้มเหลว (เช็ค URL, Key หรือ RLS Policy)';
+                statusEl.className = 'flex items-center gap-2 px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-bold';
+            }
+        }
+
+        // --- 4. DASHBOARD LOGIC (ลอจิกเดิมของคุณ ทำงานร่วมกับชุดข้อมูลใหม่ได้ทันที) ---
+        function populateFilters() {
+            const months = [...new Set(rawData.map(d => d.month))].sort((a,b) => monthNames.indexOf(a) - monthNames.indexOf(b));
+            const merchants = [...new Set(rawData.map(d => d.merchant))].sort();
+            const tours = [...new Set(rawData.map(d => d.tour))].sort();
+
+            fillSelect('filterMonth', months);
+            fillSelect('filterMerchant', merchants);
+            fillSelect('filterTour', tours);
+
+            document.querySelectorAll('select').forEach(el => el.onchange = updateDashboard);
+            document.getElementById('resetFilters').onclick = () => {
+                document.querySelectorAll('select').forEach(el => el.value = 'ALL');
+                updateDashboard();
+            };
+        }
+
+        function fillSelect(id, opts) {
+            const el = document.getElementById(id);
+            const current = el.value;
+            el.innerHTML = '<option value="ALL">ทั้งหมด</option>';
+            opts.forEach(o => {
+                if(o !== "Unknown") el.innerHTML += `<option value="${o}">${o}</option>`;
+            });
+            el.value = current || 'ALL';
+        }
+
+        function updateDashboard() {
+            const mFilter = document.getElementById('filterMonth').value;
+            const merFilter = document.getElementById('filterMerchant').value;
+            const tFilter = document.getElementById('filterTour').value;
+
+            const filtered = rawData.filter(d => 
+                (mFilter === 'ALL' || d.month === mFilter) &&
+                (merFilter === 'ALL' || d.merchant === merFilter) &&
+                (tFilter === 'ALL' || d.tour === tFilter)
+            );
+
+            // KPI Update
+            const totalIncome = filtered.reduce((s, r) => s + r.income, 0);
+            document.getElementById('kpiTotalBookings').innerText = filtered.length.toLocaleString();
+            document.getElementById('kpiTotalIncome').innerText = '฿' + Math.round(totalIncome).toLocaleString();
+            document.getElementById('kpiTourCount').innerText = [...new Set(filtered.map(d => d.tour))].length;
+
+            renderCharts(filtered);
+        }
+
+        function renderCharts(data) {
+            const merData = aggregate(data, 'merchant', 'income');
+            updateChart('chartMerchant', 'pie', Object.keys(merData), Object.values(merData), 'รายได้');
+
+            const timeData = aggregate(data, 'month', 'count');
+            updateChart('chartTimeline', 'bar', Object.keys(timeData), Object.values(timeData), 'ยอดจอง', '#3b82f6');
+
+            const tourData = aggregate(data, 'tour', 'income');
+            const sortedTours = Object.entries(tourData).sort((a,b) => b[1]-a[1]).slice(0, 5);
+            updateChart('chartTours', 'bar', sortedTours.map(t => t[0]), sortedTours.map(t => t[1]), 'รายได้รวม (Top 5)', '#10b981', 'y');
+        }
+
+        function aggregate(data, key, type) {
+            return data.reduce((acc, curr) => {
+                const k = curr[key] || "Unknown";
+                acc[k] = (acc[k] || 0) + (type === 'count' ? 1 : curr[type]);
+                return acc;
+            }, {});
+        }
+
+        function updateChart(id, type, labels, values, label, color, axis = 'x') {
+            if (chartInstances[id]) chartInstances[id].destroy();
+            chartInstances[id] = new Chart(document.getElementById(id), {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{ 
+                        label: label, 
+                        data: values, 
+                        backgroundColor: color || ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899'] 
+                    }]
+                },
+                options: { 
+                    indexAxis: axis, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: type === 'pie', position: 'bottom' } 
+                    } 
+                }
+            });
+        }
+
+        // --- 5. เริ่มทำงานทันทีที่โหลดหน้าเว็บ ---
+        fetchSupabaseData();
+    </script>
+</body>
+</html>
