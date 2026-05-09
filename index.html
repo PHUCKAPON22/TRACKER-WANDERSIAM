@@ -2,82 +2,83 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WanderSiam Professional Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WanderSiam Executive</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .risk-row { background-color: #fee2e2; border-left: 4px solid #ef4444; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; }
+        /* ซ่อน Scrollbar ให้ดูคลีนบนมือถือ */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 min-h-screen p-4 md:p-8">
+<body class="text-gray-800 pb-10">
 
-    <div class="max-w-7xl mx-auto">
-        <div class="bg-white p-6 rounded-lg shadow-md mb-6 flex flex-col md:flex-row justify-between items-center gap-4 border-l-4 border-blue-600">
+    <div class="sticky top-0 z-50 bg-gray-900 text-white p-4 shadow-md">
+        <div class="flex justify-between items-center max-w-4xl mx-auto">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">WanderSiam Real-time Dashboard</h1>
-                <p class="text-sm text-gray-500 mt-1">Analytics Mode: SQL View Aggregation (Optimized for 40k+ Rows)</p>
+                <h1 class="text-xl font-bold tracking-tight">WanderSiam</h1>
+                <p class="text-xs text-gray-400 font-medium">Executive Pulse</p>
             </div>
-            <div id="connectionStatus" class="flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-sm font-bold">
-                กำลังโหลดข้อมูล...
+            <div id="connectionStatus" class="text-xs bg-gray-800 px-3 py-1.5 rounded-full border border-gray-700 text-gray-300">
+                Syncing...
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 mt-6 space-y-6">
+        
+        <div class="glass-card p-4 rounded-2xl shadow-sm">
+            <div class="flex gap-2 overflow-x-auto pb-2">
+                <select id="filterMonth" class="bg-gray-50 border border-gray-200 text-sm rounded-xl px-3 py-2 shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></select>
+                <select id="filterTour" class="bg-gray-50 border border-gray-200 text-sm rounded-xl px-3 py-2 shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></select>
+                <button id="resetFilters" class="bg-gray-800 text-white text-sm rounded-xl px-4 py-2 shrink-0 font-bold active:bg-gray-700">Clear</button>
             </div>
         </div>
 
-        <div id="dashboardContent" class="hidden">
-            <div class="bg-white p-4 rounded-lg shadow-md mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">เดือน (Month)</label>
-                    <select id="filterMonth" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:ring-2 focus:ring-blue-500"></select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">ไกด์ (Tour Guide)</label>
-                    <select id="filterGuide" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:ring-2 focus:ring-blue-500"></select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">ชื่อทัวร์ (Tour)</label>
-                    <select id="filterTour" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:ring-2 focus:ring-blue-500"></select>
-                </div>
-                <div class="flex items-center gap-2 mb-2">
-                    <input type="checkbox" id="checkRisk" class="w-5 h-5 text-red-600 rounded">
-                    <label for="checkRisk" class="text-xs font-bold text-red-700 uppercase">เฉพาะทัวร์เสี่ยงขาดทุน (Pax < 3)</label>
-                </div>
-                <div>
-                    <button id="resetFilters" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded transition">รีเซ็ต</button>
-                </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="glass-card p-5 rounded-2xl shadow-sm border-l-4 border-emerald-500">
+                <p class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Net Revenue</p>
+                <h2 id="kpiNetIncome" class="text-2xl md:text-3xl font-black text-gray-900">฿0</h2>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="bg-white p-6 rounded-lg shadow-md border-b-4 border-blue-500">
-                    <h3 class="text-sm font-semibold text-gray-500 uppercase">ยอดจอง (Groups/Rounds)</h3>
-                    <p id="kpiTotalBookings" class="text-4xl font-bold text-gray-900 mt-2">0</p>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow-md border-b-4 border-green-500">
-                    <h3 class="text-sm font-semibold text-gray-500 uppercase">รายได้รวม (Income)</h3>
-                    <p id="kpiTotalIncome" class="text-4xl font-bold text-gray-900 mt-2">฿0</p>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow-md border-b-4 border-red-500">
-                    <h3 class="text-sm font-semibold text-gray-500 uppercase">กลุ่มเสี่ยง (Risk Groups)</h3>
-                    <p id="kpiRiskCount" class="text-4xl font-bold text-red-600 mt-2">0</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <div class="bg-white p-6 rounded-lg shadow-md h-80">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4">รายได้ตามเอเยนต์</h3>
-                    <canvas id="chartMerchant"></canvas>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow-md h-80">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4">สถานะกำไร/ขาดทุน (รอบบริการ)</h3>
-                    <canvas id="chartRisk"></canvas>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow-md h-96 lg:col-span-2">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4">ทัวร์ทำเงินสูงสุด (Top 5 Tours)</h3>
-                    <canvas id="chartTours"></canvas>
-                </div>
+            <div class="glass-card p-5 rounded-2xl shadow-sm border-l-4 border-red-500 relative">
+                <p class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Cancel Rate</p>
+                <h2 id="kpiCancelRate" class="text-2xl md:text-3xl font-black text-gray-900">0%</h2>
+                <span class="absolute top-4 right-4 flex h-3 w-3">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
             </div>
         </div>
+
+        <div class="bg-red-50 p-5 rounded-2xl shadow-sm border border-red-100">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-sm font-bold text-red-800 uppercase flex items-center gap-2">
+                    ⚠️ Action Required (Pax < 3)
+                </h3>
+                <span id="riskBadge" class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-md">0 Rounds</span>
+            </div>
+            <div id="riskList" class="space-y-2 max-h-48 overflow-y-auto">
+                <p class="text-xs text-red-500">Loading risks...</p>
+            </div>
+        </div>
+
+        <div class="glass-card p-5 rounded-2xl shadow-sm">
+            <h3 class="text-sm font-bold text-gray-800 mb-4">Merchant Contribution</h3>
+            <div class="h-64 relative">
+                <canvas id="chartMerchant"></canvas>
+            </div>
+        </div>
+
+        <div class="glass-card p-5 rounded-2xl shadow-sm">
+            <h3 class="text-sm font-bold text-gray-800 mb-4">Revenue Trend</h3>
+            <div class="h-64 relative">
+                <canvas id="chartTrend"></canvas>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -93,11 +94,11 @@
 
         async function fetchSupabaseData() {
             try {
-                // *** ดึงข้อมูลจาก View ที่เราจะสร้างชื่อ dashboard_analytics ***
+                // ดึงจาก View ระดับผู้บริหาร
                 const { data, error } = await supabaseClient
-                    .from('dashboard_analytics')
+                    .from('wander_ceo_metrics')
                     .select('*')
-                    .limit(5000); // มั่นใจได้ว่าข้อมูล Group แล้วจะไม่เกินลิมิต Browser
+                    .limit(10000); 
 
                 if (error) throw error;
 
@@ -110,38 +111,39 @@
                     return {
                         ...row,
                         month: monthStr,
-                        income: parseFloat(row.total_income) || 0,
-                        pax: parseInt(row.total_pax) || 0,
-                        guide: row["TOUR GUIDE"] || "No Guide",
-                        tour: row["TOUR NAME"] || "Unknown Tour",
+                        net_income: parseFloat(row.net_income) || 0,
+                        net_pax: parseInt(row.net_pax) || 0,
+                        total_bookings: parseInt(row.total_bookings) || 0,
+                        cancelled_bookings: parseInt(row.cancelled_bookings) || 0,
+                        is_risk: parseInt(row.is_risk) || 0,
+                        tour: row["TOUR NAME"] || "Unknown",
                         merchant: row.Merchant || "Direct"
                     };
                 });
 
-                updateConnectionStatus(rawData.length);
-                document.getElementById('dashboardContent').classList.remove('hidden');
+                document.getElementById('connectionStatus').innerText = 'Live 🟢';
+                document.getElementById('connectionStatus').classList.replace('text-gray-300', 'text-emerald-400');
+                
                 populateFilters();
                 updateDashboard();
 
             } catch (err) {
                 console.error("Fetch Error:", err);
-                document.getElementById('connectionStatus').innerText = '❌ Error: ไม่พบ View หรือการเชื่อมต่อผิดพลาด';
+                document.getElementById('connectionStatus').innerText = 'Offline 🔴';
+                document.getElementById('connectionStatus').classList.replace('text-gray-300', 'text-red-400');
             }
         }
 
         function populateFilters() {
             const months = [...new Set(rawData.map(d => d.month))].sort((a,b) => monthNames.indexOf(a) - monthNames.indexOf(b));
-            const guides = [...new Set(rawData.map(d => d.guide))].sort();
             const tours = [...new Set(rawData.map(d => d.tour))].sort();
 
             fillSelect('filterMonth', months);
-            fillSelect('filterGuide', guides);
             fillSelect('filterTour', tours);
 
-            document.querySelectorAll('select, input[type="checkbox"]').forEach(el => el.onchange = updateDashboard);
+            document.querySelectorAll('select').forEach(el => el.onchange = updateDashboard);
             document.getElementById('resetFilters').onclick = () => {
                 document.querySelectorAll('select').forEach(el => el.value = 'ALL');
-                document.getElementById('checkRisk').checked = false;
                 updateDashboard();
             };
         }
@@ -149,82 +151,97 @@
         function fillSelect(id, opts) {
             const el = document.getElementById(id);
             const current = el.value;
-            el.innerHTML = '<option value="ALL">ทั้งหมด</option>';
+            el.innerHTML = '<option value="ALL">All Dates</option>';
+            if(id === 'filterTour') el.innerHTML = '<option value="ALL">All Tours</option>';
             opts.forEach(o => el.innerHTML += `<option value="${o}">${o}</option>`);
             el.value = current || 'ALL';
         }
 
         function updateDashboard() {
             const mFilter = document.getElementById('filterMonth').value;
-            const gFilter = document.getElementById('filterGuide').value;
             const tFilter = document.getElementById('filterTour').value;
-            const riskOnly = document.getElementById('checkRisk').checked;
 
             const filtered = rawData.filter(d => 
                 (mFilter === 'ALL' || d.month === mFilter) &&
-                (gFilter === 'ALL' || d.guide === gFilter) &&
-                (tFilter === 'ALL' || d.tour === tFilter) &&
-                (!riskOnly || d.profit_status === 'RISK')
+                (tFilter === 'ALL' || d.tour === tFilter)
             );
 
-            // KPI
-            const totalIncome = filtered.reduce((s, r) => s + r.income, 0);
-            const riskCount = filtered.filter(d => d.profit_status === 'RISK').length;
+            // Calculate Executive KPIs
+            const netIncome = filtered.reduce((s, r) => s + r.net_income, 0);
+            const totalBookings = filtered.reduce((s, r) => s + r.total_bookings, 0);
+            const cancelledBookings = filtered.reduce((s, r) => s + r.cancelled_bookings, 0);
             
-            document.getElementById('kpiTotalBookings').innerText = filtered.length.toLocaleString();
-            document.getElementById('kpiTotalIncome').innerText = '฿' + Math.round(totalIncome).toLocaleString();
-            document.getElementById('kpiRiskCount').innerText = riskCount.toLocaleString();
+            const cancelRate = totalBookings > 0 ? ((cancelledBookings / totalBookings) * 100).toFixed(1) : 0;
+            const riskData = filtered.filter(d => d.is_risk === 1);
 
+            // Update DOM
+            document.getElementById('kpiNetIncome').innerText = '฿' + (netIncome / 1000).toFixed(1) + 'k'; // ย่อตัวเลขให้ดูง่ายบนมือถือ
+            document.getElementById('kpiCancelRate').innerText = cancelRate + '%';
+            document.getElementById('riskBadge').innerText = riskData.length + ' Rounds';
+
+            renderRiskList(riskData);
             renderCharts(filtered);
         }
 
+        function renderRiskList(riskData) {
+            const listEl = document.getElementById('riskList');
+            listEl.innerHTML = '';
+            
+            if(riskData.length === 0) {
+                listEl.innerHTML = '<p class="text-xs text-gray-500 italic">No high-risk rounds currently.</p>';
+                return;
+            }
+
+            // จัดเรียงตามวันที่ล่าสุดขึ้นก่อน
+            const sortedRisk = riskData.sort((a,b) => new Date(b.DATE) - new Date(a.DATE)).slice(0, 10); // โชว์แค่ 10 อันดับแรก
+            
+            sortedRisk.forEach(r => {
+                listEl.innerHTML += `
+                    <div class="bg-white p-3 rounded-lg border border-red-100 flex justify-between items-center">
+                        <div>
+                            <p class="text-xs font-bold text-gray-900">${r.DATE} | ${r["Pickup/Meeting Time"]}</p>
+                            <p class="text-[10px] text-gray-500 truncate w-40">${r.tour}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="block text-xs font-black text-red-600">${r.net_pax} Pax</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
         function renderCharts(data) {
-            // Chart Merchant
-            const merData = aggregate(data, 'merchant', 'income');
-            updateChart('chartMerchant', 'pie', Object.keys(merData), Object.values(merData), 'รายได้');
+            // Merchant Doughnut (เน้นดูง่าย)
+            const merData = aggregate(data, 'merchant', 'net_income');
+            updateChart('chartMerchant', 'doughnut', Object.keys(merData), Object.values(merData), 'Net Revenue', ['#111827', '#3b82f6', '#10b981', '#f59e0b', '#ef4444']);
 
-            // Chart Risk Status
-            const riskData = aggregate(data, 'profit_status', 'count');
-            updateChart('chartRisk', 'doughnut', Object.keys(riskData), Object.values(riskData), 'รอบบริการ', ['#ef4444', '#10b981']);
-
-            // Chart Tours
-            const tourData = aggregate(data, 'tour', 'income');
-            const sortedTours = Object.entries(tourData).sort((a,b) => b[1]-a[1]).slice(0, 5);
-            updateChart('chartTours', 'bar', sortedTours.map(t => t[0]), sortedTours.map(t => t[1]), 'รายได้รวม (Top 5)', '#3b82f6', 'y');
+            // Trend Bar Chart
+            const timeData = aggregate(data, 'month', 'net_income');
+            updateChart('chartTrend', 'bar', Object.keys(timeData), Object.values(timeData), 'Revenue', '#111827');
         }
 
         function aggregate(data, key, type) {
             return data.reduce((acc, curr) => {
                 const k = curr[key] || "Unknown";
-                acc[k] = (acc[k] || 0) + (type === 'count' ? 1 : curr[type]);
+                acc[k] = (acc[k] || 0) + curr[type];
                 return acc;
             }, {});
         }
 
-        function updateChart(id, type, labels, values, label, colors, axis = 'x') {
+        function updateChart(id, type, labels, values, label, color) {
             if (chartInstances[id]) chartInstances[id].destroy();
             chartInstances[id] = new Chart(document.getElementById(id), {
                 type: type,
                 data: {
                     labels: labels,
-                    datasets: [{ 
-                        label: label, 
-                        data: values, 
-                        backgroundColor: colors || ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] 
-                    }]
+                    datasets: [{ label: label, data: values, backgroundColor: color, borderRadius: type === 'bar' ? 4 : 0 }]
                 },
                 options: { 
-                    indexAxis: axis, 
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: (type === 'pie' || type === 'doughnut'), position: 'bottom' } }
+                    plugins: { legend: { display: type === 'doughnut', position: 'right', labels: { boxWidth: 12, font: {size: 10} } } },
+                    scales: type === 'bar' ? { x: { grid: {display: false} }, y: { display: false } } : {} // ซ่อนแกน Y ให้ดูคลีน
                 }
             });
-        }
-
-        function updateConnectionStatus(count) {
-            const el = document.getElementById('connectionStatus');
-            el.innerHTML = `● ดึงข้อมูลสำเร็จ (${count.toLocaleString()} กลุ่ม)`;
-            el.className = 'flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-bold';
         }
 
         fetchSupabaseData();
