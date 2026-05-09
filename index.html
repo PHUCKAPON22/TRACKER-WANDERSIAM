@@ -9,7 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; }
-        ::-webkit-scrollbar { display: none; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .card { background: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #f1f5f9; }
     </style>
 </head>
@@ -19,7 +20,7 @@
         <div class="max-w-4xl mx-auto flex justify-between items-center">
             <div>
                 <h1 class="text-xl font-black tracking-tight">WanderSiam</h1>
-                <p class="text-xs text-slate-400">Executive Analytics</p>
+                <p class="text-xs text-slate-400">Drill-Down Analytics</p>
             </div>
             <div id="connectionStatus" class="text-xs font-bold px-3 py-1 bg-slate-800 rounded-full text-slate-300">
                 Syncing...
@@ -31,46 +32,84 @@
 
     <div class="max-w-4xl mx-auto px-4 mt-6 space-y-6">
         
-        <div class="card p-4">
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">เลือกเดือนเพื่อวิเคราะห์</label>
-            <select id="filterMonth" class="w-full bg-slate-50 border border-slate-200 text-base rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-800 shadow-sm appearance-none"></select>
+        <div class="card p-5 space-y-4">
+            <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest border-b pb-2">🔍 ตัวกรองข้อมูล (Filters)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">เดือน (Month)</label>
+                    <select id="filterMonth" class="w-full bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-2 font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"></select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">ทัวร์ (Tour Name)</label>
+                    <select id="filterTour" class="w-full bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-2 font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"></select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">เอเยนต์ (Merchant)</label>
+                    <select id="filterMerchant" class="w-full bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-2 font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"></select>
+                </div>
+            </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
             <div class="card p-5 border-t-4 border-t-blue-500">
-                <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">ยอดจอง (Bookings)</p>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">ยอดจอง (Bookings)</p>
                 <h2 id="kpiNetBookings" class="text-3xl font-black text-slate-900">0</h2>
-                <p class="text-[10px] text-slate-400 mt-1">จำนวนบุ๊กกิ้งสุทธิ</p>
             </div>
             <div class="card p-5 border-t-4 border-t-emerald-500">
-                <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">รายได้ (Revenue)</p>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">รายได้สุทธิ (Net Revenue)</p>
                 <h2 id="kpiNetIncome" class="text-2xl font-black text-emerald-600">฿0</h2>
-                <p class="text-[10px] text-slate-400 mt-1">รายได้ที่รับจริง</p>
             </div>
             <div class="card p-5 border-t-4 border-t-rose-500 bg-rose-50">
-                <p class="text-xs text-rose-500 font-bold uppercase tracking-wider mb-1">ยกเลิก (Canceled)</p>
+                <p class="text-[10px] text-rose-400 font-bold uppercase tracking-wider mb-1">ยกเลิก (Canceled)</p>
                 <h2 id="kpiCancelCount" class="text-3xl font-black text-rose-700">0</h2>
-                <p class="text-[10px] text-rose-400 mt-1">จำนวนเคสยกเลิก</p>
+                <p class="text-[10px] font-bold text-rose-500 mt-1">เงินหายไป: <span id="kpiLostIncome">฿0</span></p>
             </div>
             <div class="card p-5 border-t-4 border-t-amber-500 bg-amber-50">
-                <p class="text-xs text-amber-600 font-bold uppercase tracking-wider mb-1">ความเสี่ยง (Risk Rounds)</p>
+                <p class="text-[10px] text-amber-500 font-bold uppercase tracking-wider mb-1">ความเสี่ยง (Risk Rounds)</p>
                 <h2 id="kpiRiskCount" class="text-3xl font-black text-amber-700">0</h2>
-                <p class="text-[10px] text-amber-600 mt-1">รอบทัวร์ขาดทุน (ลูกค้า 1 คน)</p>
+                <p class="text-[10px] font-bold text-amber-600 mt-1">ลูกค้าน้อยกว่า 2 คน</p>
             </div>
         </div>
 
         <div class="card p-5">
-            <h3 class="text-sm font-black text-slate-800 mb-4 uppercase">🏆 ทัวร์ขายดีประจำเดือน</h3>
+            <h3 class="text-sm font-black text-slate-800 mb-4 uppercase">🏆 ทัวร์ทำเงินสูงสุด</h3>
             <div class="h-64 relative"><canvas id="chartTours"></canvas></div>
         </div>
-        <div class="card p-5">
-            <h3 class="text-sm font-black text-slate-800 mb-4 uppercase">💼 สัดส่วน Merchant</h3>
-            <div class="h-64 relative"><canvas id="chartMerchant"></canvas></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="card p-5">
+                <h3 class="text-sm font-black text-slate-800 mb-4 uppercase">💼 สัดส่วนรายได้ Merchant</h3>
+                <div class="h-64 relative"><canvas id="chartMerchant"></canvas></div>
+            </div>
+            <div class="card p-5">
+                <h3 class="text-sm font-black text-slate-800 mb-4 uppercase">📉 ยอด Cancel แยกตาม Merchant</h3>
+                <div class="h-64 relative"><canvas id="chartCancelMerchant"></canvas></div>
+            </div>
         </div>
+
         <div class="card p-5">
-            <h3 class="text-sm font-black text-slate-800 mb-4 uppercase">📈 แนวโน้มรายได้</h3>
-            <div class="h-56 relative"><canvas id="chartTrend"></canvas></div>
+            <h3 class="text-sm font-black text-amber-600 mb-2 uppercase flex justify-between items-center">
+                <span>⚠️ ตารางรายละเอียดรอบทัวร์เสี่ยง (Pax = 1)</span>
+                <span id="riskTableCount" class="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full">0 รอบ</span>
+            </h3>
+            <p class="text-[10px] text-slate-400 mb-4">ข้อมูลเฉพาะรอบที่ไม่ได้ถูกยกเลิก แต่มีลูกค้าจองมาเพียง 1 คน (รอการรวมกรุ๊ป)</p>
+            
+            <div class="overflow-x-auto max-h-96 border rounded-lg">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-50 text-[10px] uppercase text-slate-500 sticky top-0">
+                        <tr>
+                            <th class="px-4 py-3 font-bold">วันที่ (Date)</th>
+                            <th class="px-4 py-3 font-bold">เวลา (Time)</th>
+                            <th class="px-4 py-3 font-bold">ทัวร์ (Tour Name)</th>
+                            <th class="px-4 py-3 font-bold">เอเยนต์ (Merchant)</th>
+                            <th class="px-4 py-3 font-bold text-right">รายได้ (Income)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="riskTableBody" class="divide-y divide-slate-100">
+                        </tbody>
+                </table>
+            </div>
         </div>
+
     </div>
 
     <script>
@@ -94,28 +133,26 @@
 
         async function fetchSupabaseData() {
             try {
-                // ดึงจาก View ล่าสุดที่รวบยอดมาให้แล้ว
                 const { data, error } = await supabaseClient
-                    .from('wander_ceo_monthly_summary')
+                    .from('wander_ceo_metrics')
                     .select('*')
                     .limit(10000);
 
                 if (error) throw error;
 
-                // แมพคอลัมน์ให้ตรงกับที่ Database ส่งมา
                 rawData = data.map(row => {
-                    const rawDate = row.sort_date ? new Date(row.sort_date) : new Date();
-                    const monthStr = row.month_year || "Unknown";
-
+                    const rawDate = row.exact_date ? new Date(row.exact_date) : new Date();
+                    
                     return {
-                        month: monthStr,
-                        rawDate: rawDate,
+                        month: row.month_year || "Unknown",
+                        exactDateStr: rawDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                        time: row.pickup_time && row.pickup_time !== 'null' ? row.pickup_time : "-",
                         net_bookings: parseInt(row.net_bookings) || 0,
                         cancel_count: parseInt(row.cancel_count) || 0,
                         net_income: parseFloat(row.net_income) || 0,
-                        // ดึงยอดทัวร์ขาดทุนที่คำนวณจาก View มาใส่
-                        loss_making: parseInt(row.loss_making_bookings) || 0,
-                        tour: row.tour_name && row.tour_name !== 'null' ? String(row.tour_name).trim() : "Unknown Tour",
+                        lost_income: parseFloat(row.lost_income) || 0,
+                        is_risk: parseInt(row.is_risk) || 0,
+                        tour: row.tour_name && row.tour_name !== 'null' ? String(row.tour_name).trim() : "Unknown",
                         merchant: row.merchant && row.merchant !== 'null' ? String(row.merchant).toUpperCase().trim() : "DIRECT"
                     };
                 });
@@ -135,37 +172,66 @@
         }
 
         function populateFilters() {
+            // ดึงค่าที่ไม่ซ้ำกันมาใส่ Dropdown
             const uniqueMonths = [...new Set(rawData.map(d => d.month))];
+            const uniqueTours = [...new Set(rawData.map(d => d.tour))].sort();
+            const uniqueMerchants = [...new Set(rawData.map(d => d.merchant))].sort();
             
+            // เรียงเดือน
             uniqueMonths.sort((a, b) => {
-                const dateA = rawData.find(d => d.month === a).rawDate;
-                const dateB = rawData.find(d => d.month === b).rawDate;
+                const dateA = new Date("01 " + a);
+                const dateB = new Date("01 " + b);
                 return dateB - dateA; 
             });
 
-            const el = document.getElementById('filterMonth');
-            el.innerHTML = '<option value="ALL">ดูทุกเดือน (All Time)</option>';
-            uniqueMonths.forEach(m => el.innerHTML += `<option value="${m}">${m}</option>`);
-            if(uniqueMonths.length > 0) el.value = uniqueMonths[0]; 
-            el.onchange = updateDashboard;
+            fillSelect('filterMonth', uniqueMonths, 'ดูทุกเดือน (All Time)');
+            fillSelect('filterTour', uniqueTours, 'ดูทุกทัวร์ (All Tours)');
+            fillSelect('filterMerchant', uniqueMerchants, 'ดูทุกเอเยนต์ (All Merchants)');
+
+            // แนบ Event Listener ให้รัน updateDashboard เวลาเปลี่ยนตัวกรอง
+            document.getElementById('filterMonth').onchange = updateDashboard;
+            document.getElementById('filterTour').onchange = updateDashboard;
+            document.getElementById('filterMerchant').onchange = updateDashboard;
+        }
+
+        function fillSelect(id, items, defaultText) {
+            const el = document.getElementById(id);
+            el.innerHTML = `<option value="ALL">${defaultText}</option>`;
+            items.forEach(item => el.innerHTML += `<option value="${item}">${item}</option>`);
         }
 
         function updateDashboard() {
+            // ดึงค่าจาก 3 ตัวกรอง
             const mFilter = document.getElementById('filterMonth').value;
-            const filtered = rawData.filter(d => mFilter === 'ALL' || d.month === mFilter);
+            const tFilter = document.getElementById('filterTour').value;
+            const merFilter = document.getElementById('filterMerchant').value;
 
-            // ใช้ reduce บวกเลขทุกบรรทัด ยอด 5980 จะมาเต็มๆ ไม่ใช่ 2528
+            // กรองข้อมูลตามเงื่อนไข (Drill-down)
+            const filtered = rawData.filter(d => 
+                (mFilter === 'ALL' || d.month === mFilter) &&
+                (tFilter === 'ALL' || d.tour === tFilter) &&
+                (merFilter === 'ALL' || d.merchant === merFilter)
+            );
+
+            // บวกรวมยอด
             const netBookings = filtered.reduce((sum, row) => sum + row.net_bookings, 0);
             const netIncome = filtered.reduce((sum, row) => sum + row.net_income, 0);
             const cancelCount = filtered.reduce((sum, row) => sum + row.cancel_count, 0);
-            const riskCount = filtered.reduce((sum, row) => sum + row.loss_making, 0);
+            const lostIncome = filtered.reduce((sum, row) => sum + row.lost_income, 0);
             
+            // การนับ Risk ต้องนับเฉพาะบรรทัดที่เป็น Risk จริงๆ
+            const riskData = filtered.filter(row => row.is_risk === 1 && row.net_bookings > 0);
+            const riskCount = riskData.length;
+            
+            // อัปเดตตัวเลขบนจอ
             document.getElementById('kpiNetBookings').innerText = netBookings.toLocaleString();
-            document.getElementById('kpiNetIncome').innerText = '฿' + netIncome.toLocaleString();
+            document.getElementById('kpiNetIncome').innerText = '฿' + netIncome.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0});
             document.getElementById('kpiCancelCount').innerText = cancelCount.toLocaleString();
+            document.getElementById('kpiLostIncome').innerText = '฿' + lostIncome.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0});
             document.getElementById('kpiRiskCount').innerText = riskCount.toLocaleString();
 
             renderCharts(filtered);
+            renderRiskTable(riskData);
         }
 
         function renderCharts(data) {
@@ -173,35 +239,47 @@
 
             // 1. Chart: ทัวร์ขายดี
             const tourData = aggregate(data, 'tour', 'net_income');
-            const sortedTours = Object.entries(tourData).sort((a,b) => b[1]-a[1]).slice(0, 7);
-            const tourLabels = sortedTours.length > 0 ? sortedTours.map(t => t[0]) : ['No Data'];
-            const tourValues = sortedTours.length > 0 ? sortedTours.map(t => t[1]) : [0];
-            updateChart('chartTours', 'bar', tourLabels, tourValues, 'รายได้สุทธิ (฿)', '#3b82f6', 'y');
+            const sortedTours = Object.entries(tourData).sort((a,b) => b[1]-a[1]).slice(0, 5);
+            updateChart('chartTours', 'bar', sortedTours.map(t => t[0]), sortedTours.map(t => t[1]), 'รายได้ (฿)', '#3b82f6', 'y');
 
-            // 2. Chart: Merchant
+            // 2. Chart: Merchant Income
             const merData = aggregate(data, 'merchant', 'net_income');
-            const merLabels = Object.keys(merData).length > 0 ? Object.keys(merData) : ['No Data'];
-            const merValues = Object.keys(merData).length > 0 ? Object.values(merData) : [0];
-            
-            const merBgColors = merLabels.map(label => {
-                let matchColor = merchantColors['DEFAULT'];
-                const safeLabel = String(label).toUpperCase();
-                for (const key in merchantColors) {
-                    if (safeLabel.includes(key)) { matchColor = merchantColors[key]; break; }
-                }
-                return matchColor;
-            });
-            updateChart('chartMerchant', 'doughnut', merLabels, merValues, 'Net Revenue', merBgColors);
+            const merLabels = Object.keys(merData);
+            const merBgColors = merLabels.map(getMerchantColor);
+            updateChart('chartMerchant', 'doughnut', merLabels, Object.values(merData), 'Net Revenue', merBgColors);
 
-            // 3. Chart: Trend
-            const trendData = aggregate(rawData, 'month', 'net_income');
-            const sortedTrendLabels = Object.keys(trendData).sort((a, b) => {
-                const dateA = rawData.find(d => d.month === a).rawDate;
-                const dateB = rawData.find(d => d.month === b).rawDate;
-                return dateA - dateB; 
+            // 3. Chart: Merchant Cancel
+            const cancelData = aggregate(data, 'merchant', 'cancel_count');
+            const cancelLabels = Object.keys(cancelData);
+            const cancelBgColors = cancelLabels.map(getMerchantColor);
+            updateChart('chartCancelMerchant', 'bar', cancelLabels, Object.values(cancelData), 'Canceled Cases', cancelBgColors, 'x');
+        }
+
+        function renderRiskTable(riskData) {
+            const tbody = document.getElementById('riskTableBody');
+            document.getElementById('riskTableCount').innerText = `${riskData.length} รอบ`;
+            tbody.innerHTML = '';
+
+            if (riskData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-center text-emerald-600 font-bold">✅ ไม่มีทัวร์ที่มีความเสี่ยงในตัวกรองนี้</td></tr>';
+                return;
+            }
+
+            // เรียงตามวันที่
+            riskData.sort((a,b) => new Date(a.exactDateStr) - new Date(b.exactDateStr));
+
+            riskData.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="px-4 py-3 whitespace-nowrap">${row.exactDateStr}</td>
+                    <td class="px-4 py-3 whitespace-nowrap font-bold text-slate-700">${row.time}</td>
+                    <td class="px-4 py-3 font-medium text-slate-800">${row.tour}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-1 bg-slate-100 text-[10px] rounded text-slate-600 font-bold">${row.merchant}</span></td>
+                    <td class="px-4 py-3 text-right font-bold text-blue-600">฿${row.net_income.toLocaleString()}</td>
+                `;
+                tbody.appendChild(tr);
             });
-            const trendValuesSafe = sortedTrendLabels.length > 0 ? sortedTrendLabels.map(m => trendData[m]) : [0];
-            updateChart('chartTrend', 'bar', sortedTrendLabels, trendValuesSafe, 'Revenue', '#0f172a');
         }
 
         function aggregate(data, key, type) {
@@ -210,6 +288,15 @@
                 acc[k] = (acc[k] || 0) + (curr[type] || 0); 
                 return acc;
             }, {});
+        }
+
+        function getMerchantColor(label) {
+            let matchColor = merchantColors['DEFAULT'];
+            const safeLabel = String(label).toUpperCase();
+            for (const key in merchantColors) {
+                if (safeLabel.includes(key)) { matchColor = merchantColors[key]; break; }
+            }
+            return matchColor;
         }
 
         function updateChart(id, type, labels, values, label, colors, axis = 'x') {
@@ -222,27 +309,18 @@
                 data: {
                     labels: labels,
                     datasets: [{ 
-                        label: label, 
-                        data: values, 
-                        backgroundColor: colors,
-                        borderRadius: type === 'bar' ? 4 : 0
+                        label: label, data: values, backgroundColor: colors, borderRadius: type === 'bar' ? 4 : 0
                     }]
                 },
                 options: { 
                     indexAxis: axis, 
                     maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: type === 'doughnut', position: 'bottom', labels: { boxWidth: 12, font: {size: 10} } } 
-                    },
-                    scales: type === 'bar' ? { 
-                        x: { grid: {display: false}, beginAtZero: true }, 
-                        y: { display: axis === 'y', beginAtZero: true } 
-                    } : {}
+                    plugins: { legend: { display: type === 'doughnut', position: 'bottom', labels: { boxWidth: 12, font: {size: 10} } } },
+                    scales: type === 'bar' ? { x: { grid: {display: false} }, y: { display: axis === 'y' } } : {}
                 }
             });
         }
 
-        // สั่งทำงาน
         fetchSupabaseData();
     </script>
 </body>
