@@ -136,7 +136,7 @@
                 const { data, error } = await supabaseClient
                     .from('wander_ceo_metrics')
                     .select('*')
-                    .limit(10000);
+                    .limit(1000000);
 
                 if (error) throw error;
 
