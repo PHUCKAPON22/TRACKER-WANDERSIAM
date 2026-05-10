@@ -1,327 +1,801 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WanderSiam CEO Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .card { background: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #f1f5f9; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>WanderSiam · CEO Live Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ═══════════════════════════════════════
+   DESIGN SYSTEM — Dark Luxury + Gold
+═══════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0d0f14;
+  --bg2:      #13161e;
+  --bg3:      #1a1e2a;
+  --bg4:      #222736;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.12);
+  --text:     #eef0f6;
+  --text2:    #8b90a4;
+  --text3:    #4e5368;
+  --gold:     #f0b429;
+  --gold2:    #ffd166;
+  --gold-dim: rgba(240,180,41,0.12);
+  --teal:     #00c9a7;
+  --teal-dim: rgba(0,201,167,0.1);
+  --rose:     #ff6b81;
+  --rose-dim: rgba(255,107,129,0.1);
+  --blue:     #4d9fff;
+  --blue-dim: rgba(77,159,255,0.1);
+  --purple:   #a78bfa;
+  --purple-dim: rgba(167,139,250,0.1);
+  --radius:   14px;
+  --radius-sm: 8px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Sora', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Subtle grid texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ═══ HEADER ═══ */
+.header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(13,15,20,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.header-brand { display: flex; align-items: center; gap: 12px; }
+.header-logo {
+  font-size: 18px; font-weight: 800; letter-spacing: -0.5px; color: var(--text);
+}
+.header-logo span { color: var(--gold); }
+.header-tagline { font-size: 10px; color: var(--text3); letter-spacing: 2px; text-transform: uppercase; font-weight: 500; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+
+.status-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text2); transition: all 0.4s;
+}
+.status-pill.live { background: rgba(0,201,167,0.1); border-color: rgba(0,201,167,0.3); color: var(--teal); }
+.status-pill.error { background: var(--rose-dim); border-color: rgba(255,107,129,0.3); color: var(--rose); }
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor; animation: pulse-dot 2s infinite;
+}
+@keyframes pulse-dot {
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%{ opacity:0.5; transform:scale(0.7); }
+}
+
+.last-update { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+
+/* ═══ LAYOUT ═══ */
+.page { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 28px 24px 60px; }
+
+/* ═══ FILTER BAR ═══ */
+.filter-bar {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+.filter-bar-label { font-size: 10px; font-weight: 700; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; flex-shrink: 0; }
+.filter-group { display: flex; gap: 10px; flex-wrap: wrap; flex: 1; }
+.filter-select {
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text); font-family: 'Sora', sans-serif;
+  font-size: 12px; font-weight: 600;
+  padding: 8px 14px; border-radius: var(--radius-sm);
+  cursor: pointer; outline: none; min-width: 180px;
+  transition: border-color 0.2s, background 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238b90a4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 30px;
+}
+.filter-select:focus, .filter-select:hover { border-color: var(--gold); background-color: var(--bg4); }
+.filter-select option { background: var(--bg3); }
+
+.filter-reset {
+  margin-left: auto; padding: 8px 16px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text2); font-size: 11px; font-weight: 600; font-family: 'Sora', sans-serif;
+  border-radius: var(--radius-sm); cursor: pointer;
+  transition: all 0.2s; letter-spacing: 0.5px;
+}
+.filter-reset:hover { border-color: var(--rose); color: var(--rose); background: var(--rose-dim); }
+
+/* ═══ SECTION TITLE ═══ */
+.section-title { font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 14px; padding-left: 2px; }
+
+/* ═══ KPI GRID ═══ */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+
+.kpi-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px 22px 18px;
+  position: relative; overflow: hidden;
+  transition: border-color 0.25s, transform 0.25s;
+  cursor: default;
+}
+.kpi-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+.kpi-card::before {
+  content: ''; position: absolute; inset: 0;
+  border-radius: var(--radius); opacity: 0; transition: opacity 0.3s;
+}
+.kpi-card:hover::before { opacity: 1; }
+
+.kpi-card.c-gold { border-top: 2px solid var(--gold); }
+.kpi-card.c-gold::before { background: radial-gradient(ellipse at top left, var(--gold-dim), transparent 60%); }
+.kpi-card.c-teal { border-top: 2px solid var(--teal); }
+.kpi-card.c-teal::before { background: radial-gradient(ellipse at top left, var(--teal-dim), transparent 60%); }
+.kpi-card.c-rose { border-top: 2px solid var(--rose); }
+.kpi-card.c-rose::before { background: radial-gradient(ellipse at top left, var(--rose-dim), transparent 60%); }
+.kpi-card.c-blue { border-top: 2px solid var(--blue); }
+.kpi-card.c-blue::before { background: radial-gradient(ellipse at top left, var(--blue-dim), transparent 60%); }
+.kpi-card.c-purple { border-top: 2px solid var(--purple); }
+.kpi-card.c-purple::before { background: radial-gradient(ellipse at top left, var(--purple-dim), transparent 60%); }
+
+.kpi-label { font-size: 10px; font-weight: 700; color: var(--text3); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 10px; }
+.kpi-value {
+  font-size: 30px; font-weight: 800; letter-spacing: -1px; line-height: 1; margin-bottom: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.kpi-card.c-gold .kpi-value { color: var(--gold2); }
+.kpi-card.c-teal .kpi-value { color: var(--teal); }
+.kpi-card.c-rose .kpi-value { color: var(--rose); }
+.kpi-card.c-blue .kpi-value { color: var(--blue); }
+.kpi-card.c-purple .kpi-value { color: var(--purple); }
+.kpi-sub { font-size: 11px; color: var(--text3); font-weight: 500; }
+.kpi-icon { position: absolute; bottom: 14px; right: 16px; font-size: 28px; opacity: 0.08; }
+
+/* ═══ CHART GRID ═══ */
+.chart-grid { display: grid; gap: 16px; margin-bottom: 16px; }
+.chart-grid.g2 { grid-template-columns: 1fr 1fr; }
+.chart-grid.g3 { grid-template-columns: 5fr 4fr; }
+.chart-grid.g-full { grid-template-columns: 1fr; }
+
+.chart-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 22px 24px;
+  transition: border-color 0.25s;
+}
+.chart-card:hover { border-color: var(--border2); }
+.chart-card-header { margin-bottom: 20px; }
+.chart-card-header h3 { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.chart-card-header p { font-size: 11px; color: var(--text3); font-weight: 400; }
+.chart-wrap { position: relative; }
+
+/* ═══ RISK TABLE ═══ */
+.risk-table-wrap {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; margin-bottom: 16px;
+}
+.risk-table-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 24px 14px; border-bottom: 1px solid var(--border);
+}
+.risk-table-header h3 { font-size: 13px; font-weight: 700; color: var(--text); }
+.risk-badge {
+  background: var(--rose-dim); border: 1px solid rgba(255,107,129,0.25);
+  color: var(--rose); font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px;
+}
+.table-scroll { overflow-x: auto; }
+.risk-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.risk-table th {
+  background: var(--bg3); padding: 10px 16px;
+  font-size: 10px; font-weight: 700; color: var(--text3);
+  letter-spacing: 1px; text-transform: uppercase; text-align: left;
+  white-space: nowrap;
+}
+.risk-table td { padding: 11px 16px; border-top: 1px solid var(--border); color: var(--text2); white-space: nowrap; }
+.risk-table tr:hover td { background: var(--bg3); color: var(--text); }
+.risk-table td.mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+.risk-table td.income-val { color: var(--gold); font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.merchant-tag {
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+  background: var(--bg4); color: var(--text2); border: 1px solid var(--border2);
+}
+
+/* ═══ ERROR BOX ═══ */
+.error-box {
+  background: var(--rose-dim); border: 1px solid rgba(255,107,129,0.3);
+  border-radius: var(--radius-sm); padding: 14px 18px;
+  color: var(--rose); font-size: 12px; margin-bottom: 20px;
+  display: none;
+}
+
+/* ═══ LOADING SKELETON ═══ */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 6px;
+}
+@keyframes shimmer { 0%{background-position:200%} 100%{background-position:-200%} }
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--bg3); }
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width: 900px) {
+  .kpi-grid { grid-template-columns: repeat(2,1fr); }
+  .chart-grid.g2, .chart-grid.g3 { grid-template-columns: 1fr; }
+  .filter-bar { flex-direction: column; align-items: flex-start; }
+  .filter-reset { margin-left: 0; }
+}
+@media(max-width: 520px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .kpi-value { font-size: 22px; }
+  .page { padding: 16px 14px 60px; }
+  .header { padding: 0 16px; }
+}
+
+/* ═══ FADE IN ═══ */
+.fade-in { animation: fadeUp 0.4s ease both; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+
+/* Stagger children */
+.kpi-grid .kpi-card:nth-child(1){animation-delay:0.05s}
+.kpi-grid .kpi-card:nth-child(2){animation-delay:0.1s}
+.kpi-grid .kpi-card:nth-child(3){animation-delay:0.15s}
+.kpi-grid .kpi-card:nth-child(4){animation-delay:0.2s}
+.kpi-grid .kpi-card:nth-child(5){animation-delay:0.25s}
+</style>
 </head>
-<body class="text-gray-800 pb-12">
+<body>
 
-    <div class="bg-slate-900 text-white p-5 sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <div>
-                <h1 class="text-xl font-black tracking-tight">WanderSiam</h1>
-                <p class="text-xs text-slate-400">DASHBOARD BY PHUK</p>
-            </div>
-            <div id="connectionStatus" class="text-xs font-bold px-3 py-1 bg-slate-800 rounded-full text-slate-300">
-                Syncing...
-            </div>
-        </div>
+<!-- HEADER -->
+<header class="header">
+  <div class="header-brand">
+    <div>
+      <div class="header-logo">Wander<span>Siam</span></div>
+      <div class="header-tagline">CEO Live Dashboard</div>
     </div>
-
-    <div id="errorBox" class="max-w-4xl mx-auto px-4 mt-4 hidden"></div>
-
-    <div class="max-w-4xl mx-auto px-4 mt-6 space-y-6">
-        
-        <div class="card p-5 space-y-4">
-            <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest border-b pb-2">🔍 ตัวกรองข้อมูล (Filters)</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">เดือน (Month)</label>
-                    <select id="filterMonth" class="w-full bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-2 font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"></select>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">ทัวร์ (Tour Name)</label>
-                    <select id="filterTour" class="w-full bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-2 font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"></select>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">เอเยนต์ (Merchant)</label>
-                    <select id="filterMerchant" class="w-full bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-2 font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"></select>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-            <div class="card p-5 border-t-4 border-t-blue-500">
-                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">ยอดจอง (Bookings)</p>
-                <h2 id="kpiNetBookings" class="text-3xl font-black text-slate-900">0</h2>
-            </div>
-            <div class="card p-5 border-t-4 border-t-emerald-500">
-                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">รายได้สุทธิ (Net Revenue)</p>
-                <h2 id="kpiNetIncome" class="text-2xl font-black text-emerald-600">฿0</h2>
-            </div>
-            <div class="card p-5 border-t-4 border-t-rose-500 bg-rose-50">
-                <p class="text-[10px] text-rose-400 font-bold uppercase tracking-wider mb-1">ยกเลิก (Canceled)</p>
-                <h2 id="kpiCancelCount" class="text-3xl font-black text-rose-700">0</h2>
-                <p class="text-[10px] font-bold text-rose-500 mt-1">เงินหายไป: <span id="kpiLostIncome">฿0</span></p>
-            </div>
-            <div class="card p-5 border-t-4 border-t-amber-500 bg-amber-50">
-                <p class="text-[10px] text-amber-500 font-bold uppercase tracking-wider mb-1">ความเสี่ยง (Risk Rounds)</p>
-                <h2 id="kpiRiskCount" class="text-3xl font-black text-amber-700">0</h2>
-                <p class="text-[10px] font-bold text-amber-600 mt-1">ลูกค้าน้อยกว่า 1 คน</p>
-            </div>
-        </div>
-
-        <div class="card p-5">
-            <h3 class="text-sm font-black text-slate-800 mb-4 uppercase">🏆 ทัวร์ทำเงินสูงสุด</h3>
-            <div class="h-64 relative"><canvas id="chartTours"></canvas></div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="card p-5">
-                <h3 class="text-sm font-black text-slate-800 mb-4 uppercase">💼 สัดส่วนรายได้ Merchant</h3>
-                <div class="h-64 relative"><canvas id="chartMerchant"></canvas></div>
-            </div>
-            <div class="card p-5">
-                <h3 class="text-sm font-black text-slate-800 mb-4 uppercase">📉 ยอด Cancel แยกตาม Merchant</h3>
-                <div class="h-64 relative"><canvas id="chartCancelMerchant"></canvas></div>
-            </div>
-        </div>
-
-        <div class="card p-5">
-            <h3 class="text-sm font-black text-amber-600 mb-2 uppercase flex justify-between items-center">
-                <span>⚠️ ตารางรายละเอียดรอบทัวร์เสี่ยง (Pax = 1)</span>
-                <span id="riskTableCount" class="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full">0 รอบ</span>
-            </h3>
-            <p class="text-[10px] text-slate-400 mb-4">ข้อมูลเฉพาะรอบที่ไม่ได้ถูกยกเลิก แต่มีลูกค้าจองมาเพียง 1 คน (รอการรวมกรุ๊ป)</p>
-            
-            <div class="overflow-x-auto max-h-96 border rounded-lg">
-                <table class="w-full text-left text-sm text-slate-600">
-                    <thead class="bg-slate-50 text-[10px] uppercase text-slate-500 sticky top-0">
-                        <tr>
-                            <th class="px-4 py-3 font-bold">วันที่ (Date)</th>
-                            <th class="px-4 py-3 font-bold">เวลา (Time)</th>
-                            <th class="px-4 py-3 font-bold">ทัวร์ (Tour Name)</th>
-                            <th class="px-4 py-3 font-bold">เอเยนต์ (Merchant)</th>
-                            <th class="px-4 py-3 font-bold text-right">รายได้ (Income)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="riskTableBody" class="divide-y divide-slate-100">
-                        </tbody>
-                </table>
-            </div>
-        </div>
-
+  </div>
+  <div class="header-right">
+    <div class="last-update" id="lastUpdate">—</div>
+    <div class="status-pill" id="statusPill">
+      <div class="status-dot"></div>
+      <span id="statusText">Connecting...</span>
     </div>
+  </div>
+</header>
 
-    <script>
-        const supabaseUrl = 'https://ibmrskcssblrroveuvxd.supabase.co'; 
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlibXJza2Nzc2JscnJvdmV1dnhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNjQ3ODAsImV4cCI6MjA5Mzg0MDc4MH0.ep1-QM9RkA3QkfrbFQa-LLvs7KADTnrmNDqZarLSMY0';
-        
-        const { createClient } = supabase;
-        const supabaseClient = createClient(supabaseUrl, supabaseKey);
-        
-        let rawData = [];
-        let chartInstances = {};
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+<!-- PAGE -->
+<div class="page">
 
-        const merchantColors = {
-            'VIATOR': '#006600',
-            'GET YOUR GUIDE': '#ff6600',
-            'WANDERSIAM': '#3385ff',
-            'AIR BNB': '#ff00ff',
-            'DEFAULT': '#94a3b8' 
-        };
+  <!-- ERROR -->
+  <div class="error-box" id="errorBox"></div>
 
-        async function fetchSupabaseData() {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('wander_ceo_metrics')
-                    .select('*')
-                    .limit(1000000);
+  <!-- FILTERS -->
+  <div class="filter-bar fade-in">
+    <span class="filter-bar-label">⚡ Filter</span>
+    <div class="filter-group">
+      <select id="filterMonth" class="filter-select">
+        <option value="ALL">📅 ทุกเดือน (All Time)</option>
+      </select>
+      <select id="filterTour" class="filter-select">
+        <option value="ALL">🗺️ ทุก Tour</option>
+      </select>
+      <select id="filterMerchant" class="filter-select">
+        <option value="ALL">💼 ทุก Merchant</option>
+      </select>
+    </div>
+    <button class="filter-reset" onclick="resetFilters()">↺ Reset</button>
+  </div>
 
-                if (error) throw error;
+  <!-- KPI ROW -->
+  <div class="section-title">Key Performance Indicators</div>
+  <div class="kpi-grid">
+    <div class="kpi-card c-gold fade-in">
+      <div class="kpi-label">รายได้</div>
+      <div class="kpi-value" id="kpiNetIncome">—</div>
+      <div class="kpi-sub">รายได้รวมทั้งหมด</div>
+      <div class="kpi-icon">💰</div>
+    </div>
+    <div class="kpi-card c-teal fade-in">
+      <div class="kpi-label">Net Bookings</div>
+      <div class="kpi-value" id="kpiNetBookings">—</div>
+      <div class="kpi-sub">จำนวนการจองสุทธิ</div>
+      <div class="kpi-icon">📋</div>
+    </div>
+    <div class="kpi-card c-rose fade-in">
+      <div class="kpi-label">Cancellations</div>
+      <div class="kpi-value" id="kpiCancelCount">—</div>
+      <div class="kpi-sub">รายได้หาย: <span id="kpiLostIncome" style="font-weight:700">—</span></div>
+      <div class="kpi-icon">❌</div>
+    </div>
+    <div class="kpi-card c-blue fade-in">
+      <div class="kpi-label">Avg / Booking</div>
+      <div class="kpi-value" id="kpiAvgIncome">—</div>
+      <div class="kpi-sub">รายได้เฉลี่ยต่อ booking</div>
+      <div class="kpi-icon">📊</div>
+    </div>
+    <div class="kpi-card c-purple fade-in" style="grid-column: span 4 / span 4; display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; align-items:center; border-top-color: var(--purple); padding: 14px 22px;">
+      <div>
+        <div class="kpi-label" style="margin-bottom:4px">⚠️ Risk Rounds</div>
+        <div style="font-size:24px;font-weight:800;color:var(--purple)" id="kpiRiskCount">—</div>
+        <div class="kpi-sub">รอบทัวร์ที่มีความเสี่ยง</div>
+      </div>
+      <div style="grid-column: span 3; display:flex; gap: 8px; flex-wrap:wrap; justify-content: flex-end;" id="kpiTopMerchants">
+      </div>
+    </div>
+  </div>
 
-                rawData = data.map(row => {
-                    const rawDate = row.exact_date ? new Date(row.exact_date) : new Date();
-                    
-                    return {
-                        month: row.month_year || "Unknown",
-                        exactDateStr: rawDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-                        time: row.pickup_time && row.pickup_time !== 'null' ? row.pickup_time : "-",
-                        net_bookings: parseInt(row.net_bookings) || 0,
-                        cancel_count: parseInt(row.cancel_count) || 0,
-                        net_income: parseFloat(row.net_income) || 0,
-                        lost_income: parseFloat(row.lost_income) || 0,
-                        is_risk: parseInt(row.is_risk) || 0,
-                        tour: row.tour_name && row.tour_name !== 'null' ? String(row.tour_name).trim() : "Unknown",
-                        merchant: row.merchant && row.merchant !== 'null' ? String(row.merchant).toUpperCase().trim() : "DIRECT"
-                    };
-                });
+  <!-- CHARTS ROW 1 -->
+  <div class="section-title">Revenue Analysis</div>
+  <div class="chart-grid g3">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3>🏆 Top Tours by Revenue</h3>
+        <p>5 ทัวร์สร้างรายได้สูงสุด</p>
+      </div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chartTours"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3>💼 Revenue by Merchant</h3>
+        <p>สัดส่วนรายได้แต่ละช่องทาง</p>
+      </div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chartMerchant"></canvas></div>
+    </div>
+  </div>
 
-                document.getElementById('connectionStatus').innerText = 'Live 🟢';
-                document.getElementById('connectionStatus').classList.replace('text-slate-300', 'text-emerald-400');
-                
-                populateFilters();
-                updateDashboard();
+  <!-- CHARTS ROW 2 -->
+  <div class="chart-grid g2">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3>📅 Daily Revenue Trend</h3>
+        <p>รายได้รายวัน — เรียงตามวันที่</p>
+      </div>
+      <div class="chart-wrap" style="height:200px"><canvas id="chartDaily"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3>🚫 Cancellations by Merchant</h3>
+        <p>จำนวนการยกเลิกแต่ละช่องทาง</p>
+      </div>
+      <div class="chart-wrap" style="height:200px"><canvas id="chartCancelMerchant"></canvas></div>
+    </div>
+  </div>
 
-            } catch (err) {
-                console.error("Fetch Error:", err);
-                document.getElementById('connectionStatus').innerText = 'Offline 🔴';
-                document.getElementById('errorBox').classList.remove('hidden');
-                document.getElementById('errorBox').innerHTML = `<div class="bg-rose-100 text-rose-700 p-3 rounded text-sm"><b>Error:</b> ${err.message}</div>`;
-            }
+  <!-- CHARTS ROW 3 — Monthly -->
+  <div class="section-title">Monthly Revenue</div>
+  <div class="chart-grid g-full" style="margin-bottom:16px">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3>📆 รายได้แต่ละเดือน (Monthly Income)</h3>
+        <p>เปรียบเทียบรายได้รายเดือน — ทุก period ที่มีข้อมูล</p>
+      </div>
+      <div class="chart-wrap" style="height:220px"><canvas id="chartMonthly"></canvas></div>
+    </div>
+  </div>
+
+  <!-- RISK TABLE -->
+  <div class="section-title">Risk Monitor</div>
+  <div class="risk-table-wrap">
+    <div class="risk-table-header">
+      <h3>⚠️ Risk Rounds — ทัวร์ที่ต้องติดตาม</h3>
+      <div class="risk-badge" id="riskTableCount">0 รอบ</div>
+    </div>
+    <div class="table-scroll">
+      <table class="risk-table">
+        <thead>
+          <tr>
+            <th>วันที่</th>
+            <th>เวลา</th>
+            <th>Tour</th>
+            <th>Merchant</th>
+            <th style="text-align:right">Net Income</th>
+          </tr>
+        </thead>
+        <tbody id="riskTableBody">
+          <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text3);font-size:13px">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+/* ══════════════════════════════════════
+   CONFIG — แก้ตรงนี้เท่านั้น
+══════════════════════════════════════ */
+const SUPABASE_URL = 'https://ibmrskcssblrroveuvxd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlibXJza2Nzc2JscnJvdmV1dnhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNjQ3ODAsImV4cCI6MjA5Mzg0MDc4MH0.ep1-QM9RkA3QkfrbFQa-LLvs7KADTnrmNDqZarLSMY0';
+const TABLE_NAME = 'wander_ceo_metrics';
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let rawData = [];
+let chartInstances = {};
+
+/* ══════════════════════════════════════
+   COLORS
+══════════════════════════════════════ */
+const PALETTE = ['#f0b429','#00c9a7','#4d9fff','#ff6b81','#a78bfa','#fb8c00','#26c6da','#9ccc65'];
+const MERCHANT_COLORS = {
+  'VIATOR': '#f0b429',
+  'GET YOUR GUIDE': '#00c9a7',
+  'AIRBNB': '#a78bfa',
+  'WANDERSIAM': '#4d9fff',
+  'DIRECT': '#4d9fff',
+  'DEFAULT': '#8b90a4'
+};
+
+function getMerchantColor(label) {
+  const s = String(label).toUpperCase();
+  for (const k in MERCHANT_COLORS) {
+    if (s.includes(k)) return MERCHANT_COLORS[k];
+  }
+  return MERCHANT_COLORS['DEFAULT'];
+}
+
+/* ══════════════════════════════════════
+   FETCH
+══════════════════════════════════════ */
+async function fetchData() {
+  try {
+    const { data, error } = await supabaseClient
+      .from(TABLE_NAME)
+      .select('*')
+      .limit(1000000);
+
+    if (error) throw error;
+
+    rawData = data.map(row => {
+      const d = row.exact_date ? new Date(row.exact_date) : new Date();
+      return {
+        month:         row.month_year || 'Unknown',
+        exactDate:     d,
+        exactDateStr:  d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }),
+        exactDateISO:  row.exact_date || '',
+        time:          row.pickup_time && row.pickup_time !== 'null' ? row.pickup_time : '—',
+        net_bookings:  parseInt(row.net_bookings) || 0,
+        cancel_count:  parseInt(row.cancel_count) || 0,
+        net_income:    parseFloat(row.net_income) || 0,
+        lost_income:   parseFloat(row.lost_income) || 0,
+        is_risk:       parseInt(row.is_risk) || 0,
+        tour:          row.tour_name && row.tour_name !== 'null' ? String(row.tour_name).trim() : 'Unknown',
+        merchant:      row.merchant && row.merchant !== 'null' ? String(row.merchant).toUpperCase().trim() : 'DIRECT'
+      };
+    });
+
+    setStatus('live', 'Live 🟢');
+    document.getElementById('lastUpdate').textContent = 'Updated ' + new Date().toLocaleTimeString('th-TH');
+
+    populateFilters();
+    updateDashboard();
+
+  } catch (err) {
+    console.error(err);
+    setStatus('error', 'Offline 🔴');
+    const eb = document.getElementById('errorBox');
+    eb.style.display = 'block';
+    eb.innerHTML = `<b>Connection Error:</b> ${err.message} — กรุณาตรวจสอบ Supabase URL และ API Key`;
+  }
+}
+
+function setStatus(type, text) {
+  const pill = document.getElementById('statusPill');
+  pill.className = 'status-pill ' + type;
+  document.getElementById('statusText').textContent = text;
+}
+
+/* ══════════════════════════════════════
+   FILTERS
+══════════════════════════════════════ */
+function populateFilters() {
+  const months    = [...new Set(rawData.map(d => d.month))].sort((a,b) => new Date('01 '+b) - new Date('01 '+a));
+  const tours     = [...new Set(rawData.map(d => d.tour))].sort();
+  const merchants = [...new Set(rawData.map(d => d.merchant))].sort();
+
+  fillSelect('filterMonth',    months,    '📅 ทุกเดือน (All Time)');
+  fillSelect('filterTour',     tours,     '🗺️ ทุก Tour');
+  fillSelect('filterMerchant', merchants, '💼 ทุก Merchant');
+
+  ['filterMonth','filterTour','filterMerchant'].forEach(id =>
+    document.getElementById(id).onchange = updateDashboard
+  );
+}
+
+function fillSelect(id, items, def) {
+  const el = document.getElementById(id);
+  const val = el.value;
+  el.innerHTML = `<option value="ALL">${def}</option>`;
+  items.forEach(i => el.innerHTML += `<option value="${i}"${i===val?' selected':''}>${i}</option>`);
+}
+
+function resetFilters() {
+  ['filterMonth','filterTour','filterMerchant'].forEach(id => document.getElementById(id).value = 'ALL');
+  updateDashboard();
+}
+
+/* ══════════════════════════════════════
+   DASHBOARD UPDATE
+══════════════════════════════════════ */
+function updateDashboard() {
+  const mF   = document.getElementById('filterMonth').value;
+  const tF   = document.getElementById('filterTour').value;
+  const merF = document.getElementById('filterMerchant').value;
+
+  const filtered = rawData.filter(d =>
+    (mF   === 'ALL' || d.month    === mF) &&
+    (tF   === 'ALL' || d.tour     === tF) &&
+    (merF === 'ALL' || d.merchant === merF)
+  );
+
+  const netBookings = filtered.reduce((s,r) => s + r.net_bookings, 0);
+  const netIncome   = filtered.reduce((s,r) => s + r.net_income, 0);
+  const cancelCount = filtered.reduce((s,r) => s + r.cancel_count, 0);
+  const lostIncome  = filtered.reduce((s,r) => s + r.lost_income, 0);
+  const avgIncome   = netBookings > 0 ? netIncome / netBookings : 0;
+  const riskData    = filtered.filter(r => r.is_risk === 1 && r.net_bookings > 0);
+
+  setText('kpiNetIncome',   '฿' + fmt(netIncome));
+  setText('kpiNetBookings', netBookings.toLocaleString());
+  setText('kpiCancelCount', cancelCount.toLocaleString());
+  setText('kpiLostIncome',  '฿' + fmt(lostIncome));
+  setText('kpiAvgIncome',   '฿' + fmt(avgIncome));
+  setText('kpiRiskCount',   riskData.length.toLocaleString());
+
+  // Top merchants mini pills
+  const merAgg = aggregate(filtered, 'merchant', 'net_income');
+  const topMer = Object.entries(merAgg).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  document.getElementById('kpiTopMerchants').innerHTML = topMer.map(([m,v]) =>
+    `<div style="background:${getMerchantColor(m)}18;border:1px solid ${getMerchantColor(m)}40;border-radius:8px;padding:8px 14px;text-align:center">
+      <div style="font-size:10px;color:${getMerchantColor(m)};font-weight:700;letter-spacing:0.5px">${m.length>12?m.substring(0,10)+'…':m}</div>
+      <div style="font-size:16px;font-weight:800;color:var(--text);margin-top:2px">฿${fmtK(v)}</div>
+    </div>`
+  ).join('');
+
+  renderCharts(filtered);
+  renderRiskTable(riskData);
+}
+
+/* ══════════════════════════════════════
+   CHARTS
+══════════════════════════════════════ */
+function renderCharts(data) {
+  if (!data.length) return;
+
+  // 1. Top Tours bar
+  const tourAgg  = aggregate(data, 'tour', 'net_income');
+  const topTours = Object.entries(tourAgg).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  renderBar('chartTours',
+    topTours.map(t => shorten(t[0], 24)),
+    topTours.map(t => t[1]),
+    PALETTE,
+    'y', '฿'
+  );
+
+  // 2. Merchant doughnut
+  const merAgg  = aggregate(data, 'merchant', 'net_income');
+  const merKeys = Object.keys(merAgg);
+  renderDoughnut('chartMerchant',
+    merKeys,
+    Object.values(merAgg),
+    merKeys.map(getMerchantColor)
+  );
+
+  // 3. Daily trend line
+  const dailyAgg = {};
+  data.forEach(r => {
+    const k = r.exactDateISO;
+    if (!k) return;
+    dailyAgg[k] = (dailyAgg[k] || 0) + r.net_income;
+  });
+  const dailySorted = Object.entries(dailyAgg).sort((a,b)=>a[0]>b[0]?1:-1);
+  renderLine('chartDaily',
+    dailySorted.map(d => d[0].slice(5)), // MM-DD
+    dailySorted.map(d => d[1])
+  );
+
+  // 5. Monthly income bar
+  const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthlyAgg = aggregate(data, 'month', 'net_income');
+  const monthlyEntries = Object.entries(monthlyAgg).sort((a, b) => {
+    const [ma, ya] = a[0].split(' ');
+    const [mb, yb] = b[0].split(' ');
+    return (ya !== yb ? ya - yb : monthOrder.indexOf(ma) - monthOrder.indexOf(mb));
+  });
+  const monthlyColors = monthlyEntries.map((_, i) => PALETTE[i % PALETTE.length]);
+  renderBar('chartMonthly',
+    monthlyEntries.map(e => e[0]),
+    monthlyEntries.map(e => e[1]),
+    monthlyColors,
+    'x', '฿'
+  );
+  const cancelAgg  = aggregate(data, 'merchant', 'cancel_count');
+  const cancelKeys = Object.keys(cancelAgg).filter(k => cancelAgg[k] > 0);
+  renderBar('chartCancelMerchant',
+    cancelKeys.map(k => shorten(k,14)),
+    cancelKeys.map(k => cancelAgg[k]),
+    cancelKeys.map(getMerchantColor),
+    'x', ''
+  );
+}
+
+function renderBar(id, labels, values, colors, axis='y', prefix='฿') {
+  destroyChart(id);
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  chartInstances[id] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: Array.isArray(colors) ? colors.map(c => c + '99') : colors + '99',
+        borderColor:     Array.isArray(colors) ? colors : colors,
+        borderWidth: 1.5,
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      indexAxis: axis,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: { label: ctx => ` ${prefix}${fmt(ctx.raw)}` },
+        backgroundColor: '#1a1e2a', titleColor: '#eef0f6', bodyColor: '#8b90a4',
+        borderColor: '#222736', borderWidth: 1, padding: 10
+      }},
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#4e5368', font: { size: 10, family: 'Sora' }, maxRotation: 0 } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#4e5368', font: { size: 10, family: 'Sora' }, callback: v => axis==='x' ? v : (prefix + fmtK(v)) } }
+      }
+    }
+  });
+}
+
+function renderDoughnut(id, labels, values, colors) {
+  destroyChart(id);
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  chartInstances[id] = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: colors.map(c=>c+'cc'), borderColor: '#0d0f14', borderWidth: 3, hoverOffset: 8 }]
+    },
+    options: {
+      maintainAspectRatio: false, cutout: '62%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#8b90a4', font: { size: 10, family: 'Sora' }, boxWidth: 10, padding: 12 } },
+        tooltip: {
+          callbacks: { label: ctx => ` ${ctx.label}: ฿${fmt(ctx.raw)}` },
+          backgroundColor: '#1a1e2a', titleColor: '#eef0f6', bodyColor: '#8b90a4',
+          borderColor: '#222736', borderWidth: 1, padding: 10
         }
+      }
+    }
+  });
+}
 
-        function populateFilters() {
-            // ดึงค่าที่ไม่ซ้ำกันมาใส่ Dropdown
-            const uniqueMonths = [...new Set(rawData.map(d => d.month))];
-            const uniqueTours = [...new Set(rawData.map(d => d.tour))].sort();
-            const uniqueMerchants = [...new Set(rawData.map(d => d.merchant))].sort();
-            
-            // เรียงเดือน
-            uniqueMonths.sort((a, b) => {
-                const dateA = new Date("01 " + a);
-                const dateB = new Date("01 " + b);
-                return dateB - dateA; 
-            });
+function renderLine(id, labels, values) {
+  destroyChart(id);
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  chartInstances[id] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        borderColor: '#f0b429',
+        backgroundColor: 'rgba(240,180,41,0.07)',
+        borderWidth: 2,
+        pointRadius: labels.length > 30 ? 0 : 3,
+        pointBackgroundColor: '#f0b429',
+        tension: 0.4, fill: true
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: { label: ctx => ` ฿${fmt(ctx.raw)}` },
+        backgroundColor: '#1a1e2a', titleColor: '#eef0f6', bodyColor: '#8b90a4',
+        borderColor: '#222736', borderWidth: 1, padding: 10
+      }},
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#4e5368', font: { size: 9 }, maxTicksLimit: 10 } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#4e5368', font: { size: 9 }, callback: v => '฿'+fmtK(v) } }
+      }
+    }
+  });
+}
 
-            fillSelect('filterMonth', uniqueMonths, 'ดูทุกเดือน (All Time)');
-            fillSelect('filterTour', uniqueTours, 'ดูทุกทัวร์ (All Tours)');
-            fillSelect('filterMerchant', uniqueMerchants, 'ดูทุกเอเยนต์ (All Merchants)');
+function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
 
-            // แนบ Event Listener ให้รัน updateDashboard เวลาเปลี่ยนตัวกรอง
-            document.getElementById('filterMonth').onchange = updateDashboard;
-            document.getElementById('filterTour').onchange = updateDashboard;
-            document.getElementById('filterMerchant').onchange = updateDashboard;
-        }
+/* ══════════════════════════════════════
+   RISK TABLE
+══════════════════════════════════════ */
+function renderRiskTable(riskData) {
+  const tbody = document.getElementById('riskTableBody');
+  document.getElementById('riskTableCount').textContent = `${riskData.length} รอบ`;
 
-        function fillSelect(id, items, defaultText) {
-            const el = document.getElementById(id);
-            el.innerHTML = `<option value="ALL">${defaultText}</option>`;
-            items.forEach(item => el.innerHTML += `<option value="${item}">${item}</option>`);
-        }
+  if (!riskData.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--teal);font-size:13px;font-weight:600">✅ ไม่มี Risk rounds ในตัวกรองนี้</td></tr>';
+    return;
+  }
 
-        function updateDashboard() {
-            // ดึงค่าจาก 3 ตัวกรอง
-            const mFilter = document.getElementById('filterMonth').value;
-            const tFilter = document.getElementById('filterTour').value;
-            const merFilter = document.getElementById('filterMerchant').value;
+  riskData.sort((a,b) => a.exactDate - b.exactDate);
+  tbody.innerHTML = riskData.map(r => `
+    <tr>
+      <td class="mono">${r.exactDateStr}</td>
+      <td class="mono" style="color:var(--text3)">${r.time}</td>
+      <td style="font-weight:600;color:var(--text)">${r.tour}</td>
+      <td><span class="merchant-tag" style="color:${getMerchantColor(r.merchant)};border-color:${getMerchantColor(r.merchant)}40">${r.merchant}</span></td>
+      <td class="income-val" style="text-align:right">฿${fmt(r.net_income)}</td>
+    </tr>`).join('');
+}
 
-            // กรองข้อมูลตามเงื่อนไข (Drill-down)
-            const filtered = rawData.filter(d => 
-                (mFilter === 'ALL' || d.month === mFilter) &&
-                (tFilter === 'ALL' || d.tour === tFilter) &&
-                (merFilter === 'ALL' || d.merchant === merFilter)
-            );
+/* ══════════════════════════════════════
+   HELPERS
+══════════════════════════════════════ */
+function aggregate(data, key, field) {
+  return data.reduce((acc, r) => {
+    const k = r[key] || 'Unknown';
+    acc[k] = (acc[k] || 0) + (r[field] || 0);
+    return acc;
+  }, {});
+}
 
-            // บวกรวมยอด
-            const netBookings = filtered.reduce((sum, row) => sum + row.net_bookings, 0);
-            const netIncome = filtered.reduce((sum, row) => sum + row.net_income, 0);
-            const cancelCount = filtered.reduce((sum, row) => sum + row.cancel_count, 0);
-            const lostIncome = filtered.reduce((sum, row) => sum + row.lost_income, 0);
-            
-            // การนับ Risk ต้องนับเฉพาะบรรทัดที่เป็น Risk จริงๆ
-            const riskData = filtered.filter(row => row.is_risk === 1 && row.net_bookings > 0);
-            const riskCount = riskData.length;
-            
-            // อัปเดตตัวเลขบนจอ
-            document.getElementById('kpiNetBookings').innerText = netBookings.toLocaleString();
-            document.getElementById('kpiNetIncome').innerText = '฿' + netIncome.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0});
-            document.getElementById('kpiCancelCount').innerText = cancelCount.toLocaleString();
-            document.getElementById('kpiLostIncome').innerText = '฿' + lostIncome.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0});
-            document.getElementById('kpiRiskCount').innerText = riskCount.toLocaleString();
+function fmt(n) { return Math.round(n).toLocaleString(); }
+function fmtK(n) { return n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? (n/1000).toFixed(0)+'K' : Math.round(n).toString(); }
+function shorten(s, max) { return s.length > max ? s.substring(0, max-1)+'…' : s; }
+function setText(id, val) { const el = document.getElementById(id); if(el) el.textContent = val; }
 
-            renderCharts(filtered);
-            renderRiskTable(riskData);
-        }
+/* ══════════════════════════════════════
+   START
+══════════════════════════════════════ */
+fetchData();
 
-        function renderCharts(data) {
-            if(data.length === 0) return;
-
-            // 1. Chart: ทัวร์ขายดี
-            const tourData = aggregate(data, 'tour', 'net_income');
-            const sortedTours = Object.entries(tourData).sort((a,b) => b[1]-a[1]).slice(0, 5);
-            updateChart('chartTours', 'bar', sortedTours.map(t => t[0]), sortedTours.map(t => t[1]), 'รายได้ (฿)', '#3b82f6', 'y');
-
-            // 2. Chart: Merchant Income
-            const merData = aggregate(data, 'merchant', 'net_income');
-            const merLabels = Object.keys(merData);
-            const merBgColors = merLabels.map(getMerchantColor);
-            updateChart('chartMerchant', 'doughnut', merLabels, Object.values(merData), 'Net Revenue', merBgColors);
-
-            // 3. Chart: Merchant Cancel
-            const cancelData = aggregate(data, 'merchant', 'cancel_count');
-            const cancelLabels = Object.keys(cancelData);
-            const cancelBgColors = cancelLabels.map(getMerchantColor);
-            updateChart('chartCancelMerchant', 'bar', cancelLabels, Object.values(cancelData), 'Canceled Cases', cancelBgColors, 'x');
-        }
-
-        function renderRiskTable(riskData) {
-            const tbody = document.getElementById('riskTableBody');
-            document.getElementById('riskTableCount').innerText = `${riskData.length} รอบ`;
-            tbody.innerHTML = '';
-
-            if (riskData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-center text-emerald-600 font-bold">✅ ไม่มีทัวร์ที่มีความเสี่ยงในตัวกรองนี้</td></tr>';
-                return;
-            }
-
-            // เรียงตามวันที่
-            riskData.sort((a,b) => new Date(a.exactDateStr) - new Date(b.exactDateStr));
-
-            riskData.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition";
-                tr.innerHTML = `
-                    <td class="px-4 py-3 whitespace-nowrap">${row.exactDateStr}</td>
-                    <td class="px-4 py-3 whitespace-nowrap font-bold text-slate-700">${row.time}</td>
-                    <td class="px-4 py-3 font-medium text-slate-800">${row.tour}</td>
-                    <td class="px-4 py-3"><span class="px-2 py-1 bg-slate-100 text-[10px] rounded text-slate-600 font-bold">${row.merchant}</span></td>
-                    <td class="px-4 py-3 text-right font-bold text-blue-600">฿${row.net_income.toLocaleString()}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function aggregate(data, key, type) {
-            return data.reduce((acc, curr) => {
-                const k = curr[key] || "Unknown";
-                acc[k] = (acc[k] || 0) + (curr[type] || 0); 
-                return acc;
-            }, {});
-        }
-
-        function getMerchantColor(label) {
-            let matchColor = merchantColors['DEFAULT'];
-            const safeLabel = String(label).toUpperCase();
-            for (const key in merchantColors) {
-                if (safeLabel.includes(key)) { matchColor = merchantColors[key]; break; }
-            }
-            return matchColor;
-        }
-
-        function updateChart(id, type, labels, values, label, colors, axis = 'x') {
-            if (chartInstances[id]) chartInstances[id].destroy();
-            const ctx = document.getElementById(id);
-            if(!ctx) return; 
-
-            chartInstances[id] = new Chart(ctx, {
-                type: type,
-                data: {
-                    labels: labels,
-                    datasets: [{ 
-                        label: label, data: values, backgroundColor: colors, borderRadius: type === 'bar' ? 4 : 0
-                    }]
-                },
-                options: { 
-                    indexAxis: axis, 
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: type === 'doughnut', position: 'bottom', labels: { boxWidth: 12, font: {size: 10} } } },
-                    scales: type === 'bar' ? { x: { grid: {display: false} }, y: { display: axis === 'y' } } : {}
-                }
-            });
-        }
-
-        fetchSupabaseData();
-    </script>
+// Auto-refresh ทุก 10 นาที
+setInterval(fetchData, 10 * 60 * 1000);
+</script>
 </body>
 </html>
