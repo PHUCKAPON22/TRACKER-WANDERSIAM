@@ -217,26 +217,27 @@ html, body {
 ═══════════════════════════════════════════════════════ */
 .main {
   margin-left: 240px;
-  padding: 24px 32px 60px;
+  padding: 32px 40px 80px;
 }
 
 .topbar {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   gap: 24px;
   flex-wrap: wrap;
 }
 .topbar-title {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
   color: var(--ink);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  line-height: 1.1;
 }
 .topbar-subtitle {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ink-3);
 }
 .topbar-actions {
@@ -313,27 +314,27 @@ html, body {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* ════════════════════════════════════════════════════════
-   KPI CARDS
+   KPI CARDS - bigger, breathable
 ═══════════════════════════════════════════════════════ */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 18px;
+  margin-bottom: 24px;
 }
 .kpi-grid.cols-4 {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
 }
 .kpi-card {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
-  padding: 16px 18px;
+  padding: 22px 24px 24px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--line);
   transition: all 0.2s;
   position: relative;
   overflow: hidden;
-  min-width: 0;  /* allow shrinking */
+  min-width: 0;
 }
 .kpi-card:hover {
   box-shadow: var(--shadow);
@@ -343,16 +344,16 @@ html, body {
 .kpi-card-head {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 .kpi-card-icon {
-  width: 36px; height: 36px;
-  border-radius: 10px;
+  width: 44px; height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 20px;
   flex-shrink: 0;
 }
 .kpi-card-icon.bg-primary { background: var(--primary-soft); color: var(--primary); }
@@ -363,11 +364,11 @@ html, body {
 .kpi-card-icon.bg-rose { background: var(--rose-soft); color: var(--rose); }
 
 .kpi-card-label {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--ink-3);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -375,21 +376,21 @@ html, body {
   min-width: 0;
 }
 .kpi-card-value {
-  font-size: clamp(18px, 2.4vw, 24px);
+  font-size: 30px;
   font-weight: 800;
   color: var(--ink);
-  line-height: 1.2;
-  letter-spacing: -0.5px;
+  line-height: 1.15;
+  letter-spacing: -0.8px;
   font-variant-numeric: tabular-nums;
-  word-break: break-all;
+  margin-bottom: 4px;
 }
 .kpi-card-delta {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11px;
+  gap: 6px;
+  font-size: 12px;
   font-weight: 600;
-  margin-top: 4px;
+  margin-top: 6px;
   font-family: 'JetBrains Mono', monospace;
 }
 .kpi-card-delta.pos { color: var(--pos); }
@@ -409,8 +410,8 @@ html, body {
 ═══════════════════════════════════════════════════════ */
 .grid {
   display: grid;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 20px;
+  margin-bottom: 24px;
 }
 .grid.cols-2 { grid-template-columns: 1fr 1fr; }
 .grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
@@ -424,7 +425,7 @@ html, body {
   background: var(--bg-card);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: 24px 26px;
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s;
 }
@@ -434,22 +435,23 @@ html, body {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   gap: 16px;
 }
 .card-title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--ink);
-  margin-bottom: 2px;
+  margin-bottom: 3px;
+  letter-spacing: -0.2px;
 }
 .card-deck {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--ink-3);
   font-weight: 400;
 }
 .card-action {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--primary);
   font-weight: 600;
   cursor: pointer;
@@ -463,11 +465,11 @@ html, body {
   gap: 4px;
   background: var(--bg-soft);
   border-radius: 6px;
-  padding: 3px;
+  padding: 4px;
 }
 .tab {
-  padding: 5px 10px;
-  font-size: 10px;
+  padding: 6px 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--ink-3);
   cursor: pointer;
@@ -487,22 +489,22 @@ html, body {
 /* ════════════════════════════════════════════════════════
    TABLES
 ═══════════════════════════════════════════════════════ */
-.tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 .tbl th {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--ink-3);
   text-align: left;
-  padding: 8px 10px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--line);
   background: var(--bg-soft);
   white-space: nowrap;
   position: sticky; top: 0;
 }
 .tbl td {
-  padding: 10px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--line);
   color: var(--ink-2);
   vertical-align: middle;
@@ -721,18 +723,27 @@ html, body {
 }
 
 /* Responsive */
-@media (max-width: 1100px) {
-  .kpi-grid {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  }
+@media (max-width: 1500px) {
+  .kpi-grid { grid-template-columns: repeat(4, 1fr); }
+  .kpi-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 1200px) {
+  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  .kpi-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+  .kpi-card-value { font-size: 24px; }
 }
 @media (max-width: 900px) {
   .app { grid-template-columns: 1fr; }
   .sidebar { display: none; }
   .main { margin-left: 0; padding: 20px; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .kpi-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
   .grid.cols-2, .grid.cols-3, .grid.cols-2-1, .grid.cols-1-2,
   .grid.cols-3-2, .grid.cols-2-3, .grid.cols-4 { grid-template-columns: 1fr; }
   .insights-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .kpi-grid, .kpi-grid.cols-4 { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -909,7 +920,7 @@ html, body {
               <div class="tab" data-trend="yoy">YoY</div>
             </div>
           </div>
-          <div class="canvas-wrap" style="height:280px"><canvas id="chartTrend"></canvas></div>
+          <div class="canvas-wrap" style="height:400px"><canvas id="chartTrend"></canvas></div>
         </div>
 
         <div class="card">
@@ -919,7 +930,7 @@ html, body {
               <div class="card-deck">Channel mix · selected period</div>
             </div>
           </div>
-          <div class="canvas-wrap" style="height:240px"><canvas id="chartChannelMix"></canvas></div>
+          <div class="canvas-wrap" style="height:380px"><canvas id="chartChannelMix"></canvas></div>
           <div id="channelLegend" style="margin-top:10px;font-size:11px"></div>
         </div>
       </div>
@@ -989,7 +1000,7 @@ html, body {
               <div class="card-deck">Average daily revenue</div>
             </div>
           </div>
-          <div class="canvas-wrap" style="height:220px"><canvas id="chartWeekday"></canvas></div>
+          <div class="canvas-wrap" style="height:300px"><canvas id="chartWeekday"></canvas></div>
         </div>
       </div>
 
@@ -1033,7 +1044,7 @@ html, body {
               <div class="card-deck">Monthly revenue · 2025 vs 2026 same-month comparison</div>
             </div>
           </div>
-          <div class="canvas-wrap" style="height:340px"><canvas id="chartYoY"></canvas></div>
+          <div class="canvas-wrap" style="height:400px"><canvas id="chartYoY"></canvas></div>
         </div>
       </div>
 
@@ -1054,7 +1065,7 @@ html, body {
               <div class="card-deck">Ticket size brackets</div>
             </div>
           </div>
-          <div class="canvas-wrap" style="height:280px"><canvas id="chartRevDist"></canvas></div>
+          <div class="canvas-wrap" style="height:400px"><canvas id="chartRevDist"></canvas></div>
         </div>
       </div>
 
@@ -1123,7 +1134,7 @@ html, body {
               <div class="card-deck">2026 vs 2025 (Jan-Apr complete months)</div>
             </div>
           </div>
-          <div class="canvas-wrap" style="height:340px"><canvas id="chartChannelGrowth"></canvas></div>
+          <div class="canvas-wrap" style="height:400px"><canvas id="chartChannelGrowth"></canvas></div>
         </div>
 
         <div class="card">
@@ -1133,7 +1144,7 @@ html, body {
               <div class="card-deck">Lower is better · GYG is cleanest</div>
             </div>
           </div>
-          <div class="canvas-wrap" style="height:340px"><canvas id="chartChannelCancel"></canvas></div>
+          <div class="canvas-wrap" style="height:400px"><canvas id="chartChannelCancel"></canvas></div>
         </div>
       </div>
 
@@ -1152,7 +1163,7 @@ html, body {
     <!-- ═══════════════════ PAGE 4: TOURS ═══════════════════ -->
     <div class="page-content" data-page="tours">
 
-      <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr)">
+      <div class="kpi-grid cols-4">
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-primary">🗺️</div><div class="kpi-card-label">Active Tours</div></div>
           <div class="kpi-card-value skeleton" id="tour1"><span class="skeleton-text">฿ 0,000</span></div>
@@ -1206,7 +1217,7 @@ html, body {
               <div class="card-deck">Premium tours per booking value</div>
             </div>
           </div>
-          <div class="canvas-wrap" style="height:280px"><canvas id="chartTailormade"></canvas></div>
+          <div class="canvas-wrap" style="height:400px"><canvas id="chartTailormade"></canvas></div>
         </div>
       </div>
 
@@ -1223,7 +1234,7 @@ html, body {
               <div class="card-deck">Operational planning · hour by hour</div>
             </div>
           </div>
-          <div class="canvas-wrap" style="height:320px"><canvas id="chartPickup"></canvas></div>
+          <div class="canvas-wrap" style="height:380px"><canvas id="chartPickup"></canvas></div>
         </div>
 
         <div class="card">
@@ -1233,7 +1244,7 @@ html, body {
               <div class="card-deck">Bookings & revenue by weekday</div>
             </div>
           </div>
-          <div class="canvas-wrap" style="height:320px"><canvas id="chartDOW"></canvas></div>
+          <div class="canvas-wrap" style="height:380px"><canvas id="chartDOW"></canvas></div>
         </div>
       </div>
 
@@ -1267,7 +1278,7 @@ html, body {
     <!-- ═══════════════════ PAGE 6: FORECASTING ═══════════════════ -->
     <div class="page-content" data-page="forecasting">
 
-      <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr)">
+      <div class="kpi-grid cols-4">
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-primary">🔮</div><div class="kpi-card-label">Future Bookings</div></div>
           <div class="kpi-card-value skeleton" id="fc1"><span class="skeleton-text">฿ 0,000</span></div>
@@ -1297,7 +1308,7 @@ html, body {
             <div class="card-deck">Daily forward bookings - tour date based</div>
           </div>
         </div>
-        <div class="canvas-wrap" style="height:280px"><canvas id="chartPipeline"></canvas></div>
+        <div class="canvas-wrap" style="height:400px"><canvas id="chartPipeline"></canvas></div>
       </div>
 
       <div class="grid cols-2">
@@ -1328,7 +1339,7 @@ html, body {
               <div class="card-deck">Same point last year vs now</div>
             </div>
           </div>
-          <div class="canvas-wrap" style="height:280px"><canvas id="chartForwardYoY"></canvas></div>
+          <div class="canvas-wrap" style="height:400px"><canvas id="chartForwardYoY"></canvas></div>
         </div>
       </div>
 
@@ -1337,7 +1348,7 @@ html, body {
     <!-- ═══════════════════ PAGE 7: RISK ═══════════════════ -->
     <div class="page-content" data-page="risk">
 
-      <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr)">
+      <div class="kpi-grid cols-4">
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-rose">⏳</div><div class="kpi-card-label">Pending Refunds</div></div>
           <div class="kpi-card-value skeleton" id="rk1"><span class="skeleton-text">฿ 0,000</span></div>
@@ -1394,7 +1405,7 @@ html, body {
               <div class="card-deck">Where exposure concentrates</div>
             </div>
           </div>
-          <div class="canvas-wrap" style="height:280px"><canvas id="chartRefundByChannel"></canvas></div>
+          <div class="canvas-wrap" style="height:400px"><canvas id="chartRefundByChannel"></canvas></div>
         </div>
 
         <div class="card">
@@ -1404,7 +1415,7 @@ html, body {
               <div class="card-deck">Monthly cancellation count</div>
             </div>
           </div>
-          <div class="canvas-wrap" style="height:280px"><canvas id="chartCancelTrend"></canvas></div>
+          <div class="canvas-wrap" style="height:400px"><canvas id="chartCancelTrend"></canvas></div>
         </div>
       </div>
 
