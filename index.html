@@ -317,9 +317,12 @@ html, body {
 ═══════════════════════════════════════════════════════ */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 14px;
   margin-bottom: 20px;
+}
+.kpi-grid.cols-4 {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 .kpi-card {
   background: var(--bg-card);
@@ -330,6 +333,7 @@ html, body {
   transition: all 0.2s;
   position: relative;
   overflow: hidden;
+  min-width: 0;  /* allow shrinking */
 }
 .kpi-card:hover {
   box-shadow: var(--shadow);
@@ -364,14 +368,20 @@ html, body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
 }
 .kpi-card-value {
-  font-size: 22px;
+  font-size: clamp(18px, 2.4vw, 24px);
   font-weight: 800;
   color: var(--ink);
   line-height: 1.2;
   letter-spacing: -0.5px;
   font-variant-numeric: tabular-nums;
+  word-break: break-all;
 }
 .kpi-card-delta {
   display: flex;
@@ -651,33 +661,9 @@ html, body {
 .insight-item-text .neutral { color: #fbbf24; }
 
 /* ════════════════════════════════════════════════════════
-   LOADING
+   (Loading overlay removed - replaced with skeleton screens
+    and top progress bar for better UX)
 ═══════════════════════════════════════════════════════ */
-.loading-overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--bg-app);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  flex-direction: column;
-  gap: 16px;
-}
-.loading-overlay.hidden { display: none; }
-.spinner {
-  width: 40px; height: 40px;
-  border: 3px solid var(--line);
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.loading-text {
-  font-size: 13px;
-  color: var(--ink-3);
-  font-weight: 500;
-}
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -685,15 +671,65 @@ html, body {
 ::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--ink-4); }
 
+/* ════════════════════════════════════════════════════════
+   SKELETON LOADING (replaces full-screen overlay)
+═══════════════════════════════════════════════════════ */
+@keyframes skeleton-pulse {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #e2e8f0 0%,
+    #f1f5f9 50%,
+    #e2e8f0 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+  border-radius: 6px;
+  color: transparent !important;
+  pointer-events: none;
+  user-select: none;
+}
+.skeleton-text { display: inline-block; min-width: 80px; }
+.skeleton-bar {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+.top-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  background-size: 200% 100%;
+  width: 100%;
+  z-index: 999;
+  animation: top-progress 1.5s linear infinite;
+  pointer-events: none;
+  display: none;
+}
+.top-progress.active { display: block; }
+@keyframes top-progress {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
 /* Responsive */
-@media (max-width: 1280px) {
-  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 1100px) {
+  .kpi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
 }
 @media (max-width: 900px) {
   .app { grid-template-columns: 1fr; }
   .sidebar { display: none; }
   .main { margin-left: 0; padding: 20px; }
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .grid.cols-2, .grid.cols-3, .grid.cols-2-1, .grid.cols-1-2,
   .grid.cols-3-2, .grid.cols-2-3, .grid.cols-4 { grid-template-columns: 1fr; }
   .insights-grid { grid-template-columns: 1fr; }
@@ -702,11 +738,8 @@ html, body {
 </head>
 <body>
 
-<!-- Loading overlay -->
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="spinner"></div>
-  <div class="loading-text">Loading WanderSiam Analytics<span id="loadingProgress"></span></div>
-</div>
+<!-- Top progress bar (subtle, non-blocking) -->
+<div class="top-progress active" id="topProgress"></div>
 
 <div class="app">
 
@@ -812,7 +845,7 @@ html, body {
             <div class="kpi-card-icon bg-primary">💰</div>
             <div class="kpi-card-label">Net Revenue</div>
           </div>
-          <div class="kpi-card-value" id="kpi1">—</div>
+          <div class="kpi-card-value skeleton" id="kpi1"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta" id="kpi1Delta"></div>
         </div>
 
@@ -821,7 +854,7 @@ html, body {
             <div class="kpi-card-icon bg-secondary">👥</div>
             <div class="kpi-card-label">Total Pax</div>
           </div>
-          <div class="kpi-card-value" id="kpi2">—</div>
+          <div class="kpi-card-value skeleton" id="kpi2"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta" id="kpi2Delta"></div>
         </div>
 
@@ -830,7 +863,7 @@ html, body {
             <div class="kpi-card-icon bg-teal">🎟️</div>
             <div class="kpi-card-label">Bookings</div>
           </div>
-          <div class="kpi-card-value" id="kpi3">—</div>
+          <div class="kpi-card-value skeleton" id="kpi3"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta" id="kpi3Delta"></div>
         </div>
 
@@ -839,7 +872,7 @@ html, body {
             <div class="kpi-card-icon bg-accent">💎</div>
             <div class="kpi-card-label">Avg Ticket</div>
           </div>
-          <div class="kpi-card-value" id="kpi4">—</div>
+          <div class="kpi-card-value skeleton" id="kpi4"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta" id="kpi4Delta"></div>
         </div>
 
@@ -848,7 +881,7 @@ html, body {
             <div class="kpi-card-icon bg-rose">⚠️</div>
             <div class="kpi-card-label">Cancel Rate</div>
           </div>
-          <div class="kpi-card-value" id="kpi5">—</div>
+          <div class="kpi-card-value skeleton" id="kpi5"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta" id="kpi5Delta"></div>
         </div>
       </div>
@@ -967,27 +1000,27 @@ html, body {
       <div class="kpi-grid">
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-primary">💰</div><div class="kpi-card-label">Gross Revenue</div></div>
-          <div class="kpi-card-value" id="rev1">—</div>
+          <div class="kpi-card-value skeleton" id="rev1"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta neutral"><span class="kpi-card-delta-label" id="rev1Sub">—</span></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-secondary">✅</div><div class="kpi-card-label">Net Revenue</div></div>
-          <div class="kpi-card-value" id="rev2">—</div>
+          <div class="kpi-card-value skeleton" id="rev2"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta neutral"><span class="kpi-card-delta-label" id="rev2Sub">Confirmed earnings</span></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-accent">⏳</div><div class="kpi-card-label">At Risk</div></div>
-          <div class="kpi-card-value" id="rev3">—</div>
+          <div class="kpi-card-value skeleton" id="rev3"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta neutral"><span class="kpi-card-delta-label" id="rev3Sub">Pending refund</span></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-rose">💸</div><div class="kpi-card-label">Refunded</div></div>
-          <div class="kpi-card-value" id="rev4">—</div>
+          <div class="kpi-card-value skeleton" id="rev4"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta neutral"><span class="kpi-card-delta-label" id="rev4Sub">Money out</span></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-purple">⭐</div><div class="kpi-card-label">Tailormade</div></div>
-          <div class="kpi-card-value" id="rev5">—</div>
+          <div class="kpi-card-value skeleton" id="rev5"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta neutral"><span class="kpi-card-delta-label" id="rev5Sub">Premium revenue</span></div>
         </div>
       </div>
@@ -1122,22 +1155,22 @@ html, body {
       <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr)">
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-primary">🗺️</div><div class="kpi-card-label">Active Tours</div></div>
-          <div class="kpi-card-value" id="tour1">—</div>
+          <div class="kpi-card-value skeleton" id="tour1"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta neutral"><span class="kpi-card-delta-label">Distinct tour types</span></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-secondary">⭐</div><div class="kpi-card-label">Top Tour Share</div></div>
-          <div class="kpi-card-value" id="tour2">—</div>
+          <div class="kpi-card-value skeleton" id="tour2"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta neutral"><span class="kpi-card-delta-label" id="tour2Sub">—</span></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-purple">💎</div><div class="kpi-card-label">Tailormade Rev</div></div>
-          <div class="kpi-card-value" id="tour3">—</div>
+          <div class="kpi-card-value skeleton" id="tour3"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta neutral"><span class="kpi-card-delta-label" id="tour3Sub">—</span></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-accent">🎯</div><div class="kpi-card-label">Multi-day Tours</div></div>
-          <div class="kpi-card-value" id="tour4">—</div>
+          <div class="kpi-card-value skeleton" id="tour4"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta neutral"><span class="kpi-card-delta-label" id="tour4Sub">—</span></div>
         </div>
       </div>
@@ -1237,22 +1270,22 @@ html, body {
       <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr)">
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-primary">🔮</div><div class="kpi-card-label">Future Bookings</div></div>
-          <div class="kpi-card-value" id="fc1">—</div>
+          <div class="kpi-card-value skeleton" id="fc1"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta neutral"><span class="kpi-card-delta-label">Beyond today</span></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-secondary">💰</div><div class="kpi-card-label">Pipeline Revenue</div></div>
-          <div class="kpi-card-value" id="fc2">—</div>
+          <div class="kpi-card-value skeleton" id="fc2"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta neutral"><span class="kpi-card-delta-label">Confirmed inflow</span></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-teal">📅</div><div class="kpi-card-label">Next 30 Days</div></div>
-          <div class="kpi-card-value" id="fc3">—</div>
+          <div class="kpi-card-value skeleton" id="fc3"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta neutral"><span class="kpi-card-delta-label">Immediate term</span></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-accent">👥</div><div class="kpi-card-label">Future Pax</div></div>
-          <div class="kpi-card-value" id="fc4">—</div>
+          <div class="kpi-card-value skeleton" id="fc4"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta neutral"><span class="kpi-card-delta-label">Total guests</span></div>
         </div>
       </div>
@@ -1307,22 +1340,22 @@ html, body {
       <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr)">
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-rose">⏳</div><div class="kpi-card-label">Pending Refunds</div></div>
-          <div class="kpi-card-value" id="rk1">—</div>
+          <div class="kpi-card-value skeleton" id="rk1"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta neutral"><span class="kpi-card-delta-label" id="rk1Sub">Items in queue</span></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-accent">💸</div><div class="kpi-card-label">At-Risk Amount</div></div>
-          <div class="kpi-card-value" id="rk2">—</div>
+          <div class="kpi-card-value skeleton" id="rk2"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta neutral"><span class="kpi-card-delta-label">Money at risk</span></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-rose">❌</div><div class="kpi-card-label">Cancellations</div></div>
-          <div class="kpi-card-value" id="rk3">—</div>
+          <div class="kpi-card-value skeleton" id="rk3"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta neutral"><span class="kpi-card-delta-label">Total in period</span></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-card-head"><div class="kpi-card-icon bg-purple">👻</div><div class="kpi-card-label">No-Shows</div></div>
-          <div class="kpi-card-value" id="rk4">—</div>
+          <div class="kpi-card-value skeleton" id="rk4"><span class="skeleton-text">฿ 0,000</span></div>
           <div class="kpi-card-delta neutral"><span class="kpi-card-delta-label">Money kept</span></div>
         </div>
       </div>
@@ -1455,7 +1488,9 @@ async function fetchAll() {
   let all = [], from = 0;
   const size = 1000;
   while (true) {
-    document.getElementById('loadingProgress').textContent = ` · ${all.length.toLocaleString()} rows`;
+    // Update sidebar info instead of fullscreen overlay
+    const info = document.getElementById('dataInfo');
+    if (info) info.textContent = `Loading ${all.length.toLocaleString()} rows…`;
     const { data, error } = await supa
       .from(TABLE).select('*')
       .order('tour_date', { ascending: true })
@@ -1469,8 +1504,14 @@ async function fetchAll() {
   return all;
 }
 
+function showProgress(show) {
+  const el = document.getElementById('topProgress');
+  if (el) el.classList.toggle('active', show);
+}
+
 async function init() {
   try {
+    showProgress(true);
     setLive('connecting', 'Loading…');
     const data = await fetchAll();
     RAW = data.map(r => ({
@@ -1487,16 +1528,17 @@ async function init() {
     populateFilters();
     setupNav();
     render();
-    document.getElementById('loadingOverlay').classList.add('hidden');
+    showProgress(false);
   } catch (e) {
     console.error(e);
     setLive('offline', 'Error');
-    document.getElementById('loadingOverlay').innerHTML = `
-      <div style="text-align:center;color:${C.rose};padding:40px">
-        <div style="font-size:48px;margin-bottom:12px">⚠️</div>
-        <div style="font-size:14px;font-weight:600;color:${C.ink}">Connection Error</div>
-        <div style="font-size:12px;color:${C.ink3};margin-top:8px">${e.message}</div>
-      </div>`;
+    showProgress(false);
+    // Show error banner instead of overlay
+    const errBanner = document.createElement('div');
+    errBanner.style.cssText = `position:fixed;top:10px;right:10px;background:${C.rose};color:#fff;padding:12px 18px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:9999;font-size:13px;max-width:340px`;
+    errBanner.innerHTML = `<b>⚠️ Connection Error</b><br><span style="font-size:11px;opacity:0.9">${e.message}</span>`;
+    document.body.appendChild(errBanner);
+    setTimeout(() => errBanner.remove(), 8000);
   }
 }
 
@@ -2630,7 +2672,10 @@ function aggregate(data, key, field) {
 
 function setKPI(id, val) {
   const el = document.getElementById(id);
-  if (el) el.textContent = val;
+  if (el) {
+    el.classList.remove('skeleton');
+    el.textContent = val;
+  }
 }
 
 function fmtCompact(n) {
